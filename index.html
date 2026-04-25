@@ -3,7 +3,34 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-<title>howru</title>
+<title>howru — 하루에 한 번, 오늘의 기분</title>
+<meta name="description" content="하루에 한 번, 오늘의 기분을 기록해요. 쌓이는 기록을 한눈에 살펴보고, 나를 더 잘 이해해요." />
+
+<!-- Favicon + Apple touch icon -->
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+<!-- PWA manifest + theme -->
+<link rel="manifest" href="/manifest.json" />
+<meta name="theme-color" content="#fafafa" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="howru" />
+
+<!-- Open Graph (Facebook, KakaoTalk, etc.) -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="howru — 하루에 한 번, 오늘의 기분" />
+<meta property="og:description" content="쌓이는 기록을 한눈에 살펴보고, 나를 더 잘 이해해요." />
+<meta property="og:image" content="/og-image.png" />
+<meta property="og:locale" content="ko_KR" />
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="howru — 하루에 한 번, 오늘의 기분" />
+<meta name="twitter:description" content="쌓이는 기록을 한눈에 살펴보고, 나를 더 잘 이해해요." />
+<meta name="twitter:image" content="/og-image.png" />
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1299,7 +1326,7 @@ function faceSVG(level, size = 48, cls = 'face-svg') {
   </svg>`;
 }
 
-/* 5+1 External Triggers */
+/* 7+1 External Triggers */
 const REASONS_MATRIX = {
   work: {
     icon_good: '🏆', icon_bad: '💼', icon_neu: '💼',
@@ -1323,8 +1350,18 @@ const REASONS_MATRIX = {
   },
   env: {
     icon_good: '🌤', icon_bad: '🌫', icon_neu: '📍',
-    label_good: '환경·일상', label_bad: '환경·일상', label_neu: '환경·일상',
-    sub_good: '좋은 날씨·공간', sub_bad: '날씨·소음·이동',  sub_neu: '보통의 하루',
+    label_good: '날씨·환경', label_bad: '날씨·환경', label_neu: '날씨·환경',
+    sub_good: '햇빛·맑은 공기', sub_bad: '날씨·소음·이동',  sub_neu: '보통의 환경',
+  },
+  food: {
+    icon_good: '🍽️', icon_bad: '🍽️', icon_neu: '🍽️',
+    label_good: '음식', label_bad: '음식', label_neu: '음식',
+    sub_good: '맛집·홈쿡·간식', sub_bad: '맛없음·체함·과식', sub_neu: '평범한 식사',
+  },
+  hobby: {
+    icon_good: '🌿', icon_bad: '🌿', icon_neu: '🌿',
+    label_good: '취미·여가', label_bad: '취미·여가', label_neu: '취미·여가',
+    sub_good: '운동·산책·영화·SNS', sub_bad: '지루함·재미없음', sub_neu: '소소한 일상',
   },
   unknown: {
     icon_good: '🌀', icon_bad: '🌀', icon_neu: '🌀',
@@ -1332,10 +1369,11 @@ const REASONS_MATRIX = {
     sub_good: '원인 없이 좋은 날', sub_bad: '원인 없이 힘든 날', sub_neu: '이유 없이 이런 날',
   },
 };
-const REASON_ORDER = ['work', 'relation', 'body', 'money', 'env', 'unknown'];
+const REASON_ORDER = ['work', 'relation', 'body', 'money', 'env', 'food', 'hobby', 'unknown'];
 const REASON_SHORT = {
   work: '일·학업', relation: '관계', body: '건강·몸',
-  money: '돈·재정', env: '환경·일상', unknown: '모르겠어',
+  money: '돈·재정', env: '날씨·환경', food: '음식', hobby: '취미·여가',
+  unknown: '모르겠어',
 };
 
 let state = { step: 'level', level: null, reasons: [], entries: [], user: null, fbReady: false };
