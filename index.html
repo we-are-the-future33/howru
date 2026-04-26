@@ -552,20 +552,6 @@
   }
 
   /* Next check-in meta */
-  .next-checkin {
-    margin-top: 12px;
-    font-size: 13px;
-    color: var(--ink-mute);
-    font-weight: 500;
-    letter-spacing: -0.01em;
-    animation: fadeIn 0.5s 0.6s both;
-  }
-  .next-checkin .countdown {
-    color: var(--ink);
-    font-feature-settings: "tnum";
-    font-weight: 600;
-  }
-
   /* ================ CHART + STATS ================ */
   .chart-wrap {
     padding: 4px 20px 12px;
@@ -1968,6 +1954,12 @@ window.dispatchEvent(new Event('firebase-ready'));
 </script>
 
 <script>
+/* ================ DOM HELPERS ================ */
+const $ = (id) => document.getElementById(id);
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
 const LEVELS = [
   { n: 5, k: '아주 좋아', color: 'var(--c5)' },
   { n: 4, k: '좋아',      color: 'var(--c4)' },
@@ -2089,7 +2081,7 @@ const REASON_SHORT = {
   unknown: '모르겠어',
 };
 
-let state = { step: 'level', level: null, reasons: [], entries: [], user: null, fbReady: false };
+let state = { step: 'level', level: null, reasons: [], user: null };
 
 /* ================ ONBOARDING ================ */
 const ONBOARD_FLAG_KEY = 'howru:onboarded';
@@ -2208,7 +2200,6 @@ const FAKE_USER = {
 function setupAuth() {
   if (TEST_MODE) {
     // Skip Firebase entirely; pretend user is signed in
-    state.fbReady = true;
     state.user = FAKE_USER;
     updateUserButton();
     showTestBadge();
@@ -2220,7 +2211,6 @@ function setupAuth() {
     window.addEventListener('firebase-ready', setupAuth, { once: true });
     return;
   }
-  state.fbReady = true;
   // Watch for auth state changes — fires immediately on load if user is signed in
   window.fb.onAuthChange(async (user) => {
     const wasSignedOut = !state.user;
@@ -2401,6 +2391,15 @@ const CLOUD_META_KEYS = [
   'howru:report_firstFreeDelivered',
   'howru:onboarded',
 ];
+// Dynamic key prefixes that should also sync (e.g. 'howru:report_seen_2026-W17')
+const CLOUD_META_PREFIXES = [
+  'howru:report_seen_',
+];
+
+function isCloudMetaKey(key) {
+  return CLOUD_META_KEYS.includes(key) ||
+         CLOUD_META_PREFIXES.some(p => key.startsWith(p));
+}
 
 // Best-effort cloud write — never block UI if it fails
 async function cloudSaveEntry(entry) {
@@ -2412,8 +2411,8 @@ async function cloudSaveEntry(entry) {
 
 async function cloudSaveMetaKey(localKey, value) {
   if (!isCloudSyncEnabled()) return;
-  // Only sync whitelisted keys
-  if (!CLOUD_META_KEYS.includes(localKey)) return;
+  // Only sync whitelisted keys (or keys matching a synced prefix)
+  if (!isCloudMetaKey(localKey)) return;
   try {
     await window.fb.fsSaveMeta(state.user.uid, { [localKey]: value });
   } catch (e) { console.warn('[cloud] saveMeta failed:', e); }
@@ -2423,7 +2422,7 @@ async function cloudSaveMetaKey(localKey, value) {
 const _origSetItem = Storage.prototype.setItem;
 Storage.prototype.setItem = function(key, value) {
   _origSetItem.call(this, key, value);
-  if (CLOUD_META_KEYS.includes(key)) {
+  if (isCloudMetaKey(key)) {
     cloudSaveMetaKey(key, value);
   }
 };
@@ -2456,7 +2455,7 @@ async function cloudPullAndMerge() {
 
     // Merge meta flags: cloud wins (most recent device wins)
     Object.keys(cloudMeta).forEach(k => {
-      if (CLOUD_META_KEYS.includes(k)) {
+      if (isCloudMetaKey(k)) {
         _origSetItem.call(localStorage, k, cloudMeta[k]);
       }
     });
@@ -2477,7 +2476,7 @@ async function cloudPullAndMerge() {
       await window.fb.fsBatchSaveEntries(state.user.uid, localOnly);
     }
 
-    // Push local-only meta flags
+    // Push local-only meta flags (whitelisted keys + prefix-matched keys)
     const localMeta = {};
     CLOUD_META_KEYS.forEach(k => {
       const v = localStorage.getItem(k);
@@ -2485,6 +2484,16 @@ async function cloudPullAndMerge() {
         localMeta[k] = v;
       }
     });
+    // Scan all localStorage for prefix-matched keys (e.g. report_seen_2026-W17)
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k) continue;
+      const matches = CLOUD_META_PREFIXES.some(p => k.startsWith(p));
+      if (!matches) continue;
+      if (cloudMeta[k] != null) continue; // already in cloud
+      const v = localStorage.getItem(k);
+      if (v != null) localMeta[k] = v;
+    }
     if (Object.keys(localMeta).length > 0) {
       await window.fb.fsSaveMeta(state.user.uid, localMeta);
     }
@@ -3089,11 +3098,6 @@ function closeReportModal() {
   if (modal) modal.hidden = true;
 }
 
-const $ = (id) => document.getElementById(id);
-function escapeHtml(s) {
-  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-
 // Legacy key migration
 const LEGACY_MAP = {
   body_in: 'body', mind_in: 'unknown', body_ex: 'env', mind_ex: 'relation', mind: 'unknown',
@@ -3222,12 +3226,6 @@ function showScreen(name) {
   $(`screen-${name}`).classList.add('active');
   state.step = name;
   window.scrollTo(0, 0);
-  // Countdown only relevant on result screen
-  if (name === 'result') {
-    startCountdown();
-  } else {
-    stopCountdown();
-  }
 }
 
 function pickLevel(n) {
@@ -3289,41 +3287,7 @@ function startEditEntry(entry) {
 }
 
 /* ================ NEXT CHECK-IN COUNTDOWN ================ */
-let nextCheckinInterval = null;
-
-function updateNextCheckin() {
-  const el = $('nextCheckin');
-  if (!el) return;
-  const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(now.getDate() + 1);
-  tomorrow.setHours(0, 0, 0, 0);
-  const ms = tomorrow.getTime() - now.getTime();
-  const totalMin = Math.floor(ms / 60000);
-  const h = Math.floor(totalMin / 60);
-  const m = totalMin % 60;
-  let countdown;
-  if (h > 0) countdown = `${h}시간 ${m}분`;
-  else if (m > 0) countdown = `${m}분`;
-  else countdown = '잠시';
-  el.innerHTML = `다음 체크인까지 <span class="countdown">${countdown}</span>`;
-}
-
-function startCountdown() {
-  if (nextCheckinInterval) clearInterval(nextCheckinInterval);
-  updateNextCheckin();
-  // Update every minute
-  nextCheckinInterval = setInterval(updateNextCheckin, 60 * 1000);
-}
-
-function stopCountdown() {
-  if (nextCheckinInterval) {
-    clearInterval(nextCheckinInterval);
-    nextCheckinInterval = null;
-  }
-}
-
-/* ================ CELEBRATION ================ */
+/* ================ CONFETTI + CELEBRATION ================ */
 function fireConfetti(level) {
   if (typeof confetti !== 'function') return;
 
@@ -3509,9 +3473,13 @@ async function selectNotifTime(hour) {
 
 async function save() {
   if (!state.level || state.reasons.length === 0) return;
+
+  // If today's entry exists, preserve its original ts/id (this is an edit, not a new entry)
+  const existing = getTodaysEntry();
+  const isEdit = !!existing;
   const entry = {
-    id: `${Date.now()}`,
-    ts: Date.now(),
+    id: existing ? existing.id : `${Date.now()}`,
+    ts: existing ? existing.ts : Date.now(),
     level: state.level,
     reasons: state.reasons.slice(),
     note: $('note').value.trim()
@@ -3527,10 +3495,11 @@ async function save() {
 
   $('saveBtn').disabled = true;
   $('saveBtn').textContent = '저장 중...';
-  await completeSave(entry);
+  await completeSave(entry, { isEdit });
 }
 
-async function completeSave(entry) {
+async function completeSave(entry, opts = {}) {
+  const isEdit = !!opts.isEdit;
   try {
     await saveEntry(entry);
     const lv = LEVELS.find(l => l.n === entry.level);
@@ -3546,16 +3515,18 @@ async function completeSave(entry) {
     showScreen('result');
     renderHistory();
     renderMissionBanner();
-    // Celebrate fresh save with confetti + bounce animation
-    setTimeout(() => {
-      celebrateOnce();
-      fireConfetti(entry.level);
-    }, 100);
-    // Check if this save just cleared the weekly mission (1주차 미션 등)
-    checkMissionClearAndCelebrate();
-    // After confetti settles, prompt for notification time (only once per device)
-    if (shouldPromptNotif()) {
-      setTimeout(() => openNotifModal(), 2400);
+    if (!isEdit) {
+      // Celebrate fresh save with confetti + bounce animation
+      setTimeout(() => {
+        celebrateOnce();
+        fireConfetti(entry.level);
+      }, 100);
+      // Check if this save just cleared the weekly mission (1주차 미션 등)
+      checkMissionClearAndCelebrate();
+      // After confetti settles, prompt for notification time (only once per device)
+      if (shouldPromptNotif()) {
+        setTimeout(() => openNotifModal(), 2400);
+      }
     }
     if ($('saveBtn')) {
       $('saveBtn').disabled = false;
@@ -3576,7 +3547,6 @@ let chart = null;
 async function renderHistory() {
   $('entries').innerHTML = '';
   const entries = await loadEntries();
-  state.entries = entries;
 
   if (!entries.length) {
     $('entries').innerHTML = '<div class="empty">첫 기록이야.</div>';
