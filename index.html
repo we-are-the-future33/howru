@@ -897,11 +897,78 @@
   }
 
   /* ================ MISSION BANNER ================ */
+  /* ================ MISSION TOOLTIP ================ */
+  .mission-banner-wrap {
+    position: relative;
+    margin: 0 20px 12px;
+  }
+  .mission-tooltip {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--ink);
+    color: white;
+    padding: 8px 30px 8px 14px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+    z-index: 5;
+    animation: tooltipFloat 1.6s ease-in-out infinite;
+    pointer-events: auto;
+  }
+  .mission-tooltip[hidden] { display: none; }
+  .mission-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 7px solid var(--ink);
+  }
+  .mission-tooltip-close {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: transparent;
+    color: rgba(255,255,255,0.65);
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .mission-tooltip-close:hover {
+    background: rgba(255,255,255,0.1);
+    color: white;
+  }
+  .mission-tooltip-text {
+    pointer-events: none;
+  }
+  @keyframes tooltipFloat {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50%      { transform: translateX(-50%) translateY(-4px); }
+  }
+
   .mission-banner {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin: 0 20px 12px;
+    margin: 0;
     padding: 12px 16px;
     background: var(--surface);
     border: none;
@@ -911,7 +978,7 @@
     font-family: inherit;
     color: var(--ink);
     text-align: left;
-    width: calc(100% - 40px);
+    width: 100%;
     transition: transform 0.2s, box-shadow 0.2s;
   }
   .mission-banner:hover {
@@ -1493,12 +1560,18 @@
         <h2 id="doneTitle">기록됨</h2>
       </div>
 
-      <!-- Mission progress banner -->
-      <button class="mission-banner" id="missionBanner" hidden>
-        <span class="pulse"></span>
-        <span class="text" id="missionBannerText">이번 주 1/3 · 2번 더 채우면 리포트가 와요</span>
-        <span class="arrow">›</span>
-      </button>
+      <!-- Mission progress banner with tooltip -->
+      <div class="mission-banner-wrap">
+        <div class="mission-tooltip" id="missionTooltip" hidden>
+          <button class="mission-tooltip-close" id="missionTooltipClose" aria-label="닫기">×</button>
+          <div class="mission-tooltip-text">여기를 눌러봐요 👇</div>
+        </div>
+        <button class="mission-banner" id="missionBanner" hidden>
+          <span class="pulse"></span>
+          <span class="text" id="missionBannerText">이번 주 1/3 · 2번 더 채우면 리포트가 와요</span>
+          <span class="arrow">›</span>
+        </button>
+      </div>
 
       <!-- Stats + chart: hidden until weekly mission cleared -->
       <div class="reward-section" id="rewardSection">
@@ -1898,27 +1971,27 @@ function faceSVG(level, size = 48, cls = 'face-svg') {
 /* 7+1 External Triggers */
 const REASONS_MATRIX = {
   work: {
-    icon_good: '🏆', icon_bad: '💼', icon_neu: '💼',
+    icon_good: '💼', icon_bad: '💼', icon_neu: '💼',
     label_good: '일·학업', label_bad: '일·학업', label_neu: '일·학업',
     sub_good: '성과·성공·칭찬',  sub_bad: '실패·마감·갈등',  sub_neu: '업무 흐름',
   },
   relation: {
-    icon_good: '💬', icon_bad: '💔', icon_neu: '👥',
+    icon_good: '👥', icon_bad: '👥', icon_neu: '👥',
     label_good: '관계', label_bad: '관계', label_neu: '관계',
     sub_good: '좋은 대화·사람',  sub_bad: '싸움·오해·서운함', sub_neu: '사람 관계',
   },
   body: {
-    icon_good: '💪', icon_bad: '🤕', icon_neu: '🧘',
+    icon_good: '🧘', icon_bad: '🧘', icon_neu: '🧘',
     label_good: '건강·몸', label_bad: '건강·몸', label_neu: '건강·몸',
     sub_good: '잘 잤고 컨디션 좋음', sub_bad: '피로·통증·수면',  sub_neu: '평범한 컨디션',
   },
   money: {
-    icon_good: '💰', icon_bad: '💸', icon_neu: '🪙',
+    icon_good: '💰', icon_bad: '💰', icon_neu: '💰',
     label_good: '돈·재정', label_bad: '돈·재정', label_neu: '돈·재정',
     sub_good: '수익·여유',     sub_bad: '손실·지출·걱정',  sub_neu: '평범한 가계',
   },
   env: {
-    icon_good: '🌤', icon_bad: '🌫', icon_neu: '📍',
+    icon_good: '🌤', icon_bad: '🌤', icon_neu: '🌤',
     label_good: '날씨·환경', label_bad: '날씨·환경', label_neu: '날씨·환경',
     sub_good: '햇빛·맑은 공기', sub_bad: '날씨·소음·이동',  sub_neu: '보통의 환경',
   },
@@ -2458,6 +2531,25 @@ function renderMissionBanner() {
   if (section) {
     section.classList.toggle('locked', !m.rewardUnlocked);
   }
+
+  // Tooltip nudge — show after first check-in if user hasn't tapped/dismissed it yet
+  renderMissionTooltip(m);
+}
+
+const MISSION_TOOLTIP_KEY = 'howru:missionTooltipSeen';
+function renderMissionTooltip(m) {
+  const tip = $('missionTooltip');
+  if (!tip) return;
+  const seen = localStorage.getItem(MISSION_TOOLTIP_KEY) === '1';
+  // Show only if: user has at least 1 check-in, mission not yet cleared, never seen tooltip before
+  const shouldShow = !seen && m.firstDone && !m.targetDone && m.checkinsThisWeek >= 1;
+  tip.hidden = !shouldShow;
+}
+
+function dismissMissionTooltip() {
+  localStorage.setItem(MISSION_TOOLTIP_KEY, '1');
+  const tip = $('missionTooltip');
+  if (tip) tip.hidden = true;
 }
 
 function openMissionModal() {
@@ -3509,7 +3601,15 @@ function initApp() {
 
   // Mission banner + detail modal handlers
   const banner = $('missionBanner');
-  if (banner) banner.addEventListener('click', openMissionModal);
+  if (banner) banner.addEventListener('click', () => {
+    dismissMissionTooltip();
+    openMissionModal();
+  });
+  const tipClose = $('missionTooltipClose');
+  if (tipClose) tipClose.addEventListener('click', (e) => {
+    e.stopPropagation(); // don't bubble to banner
+    dismissMissionTooltip();
+  });
   const missionClose = $('missionModalCloseBtn');
   const missionBackdrop = $('missionBackdrop');
   if (missionClose) missionClose.addEventListener('click', closeMissionModal);
