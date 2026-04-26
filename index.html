@@ -1861,13 +1861,17 @@
   </div>
 </div>
 
-<!-- Firebase Auth module (loads asynchronously, exposes to window.fb) -->
+<!-- Firebase Auth + Firestore module (loads asynchronously, exposes to window.fb) -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getAuth, GoogleAuthProvider,
   signInWithPopup, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {
+  getFirestore, doc, setDoc, getDoc, deleteDoc,
+  collection, getDocs, writeBatch
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC-XivAxixT0h_iFEJk8iwBCPuiFX3GcJM",
@@ -1882,6 +1886,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
+const db = getFirestore(app);
 
 // Expose Firebase API to the rest of the (non-module) code
 window.fb = {
@@ -1890,6 +1895,46 @@ window.fb = {
   signOut: () => signOut(auth),
   onAuthChange: (cb) => onAuthStateChanged(auth, cb),
   getUser: () => auth.currentUser,
+
+  // ---- Firestore: per-user data ----
+  // Path: users/{uid}/entries/{dateKey}, users/{uid}/meta/state
+
+  fsSaveEntry: async (uid, dateKey, entry) => {
+    const ref = doc(db, 'users', uid, 'entries', dateKey);
+    await setDoc(ref, entry, { merge: true });
+  },
+
+  fsDeleteEntry: async (uid, dateKey) => {
+    const ref = doc(db, 'users', uid, 'entries', dateKey);
+    await deleteDoc(ref);
+  },
+
+  fsLoadAllEntries: async (uid) => {
+    const colRef = collection(db, 'users', uid, 'entries');
+    const snap = await getDocs(colRef);
+    const out = {};
+    snap.forEach(d => { out[d.id] = d.data(); });
+    return out; // { '2026-04-25': {...}, ... }
+  },
+
+  fsSaveMeta: async (uid, partial) => {
+    const ref = doc(db, 'users', uid, 'meta', 'state');
+    await setDoc(ref, partial, { merge: true });
+  },
+
+  fsLoadMeta: async (uid) => {
+    const ref = doc(db, 'users', uid, 'meta', 'state');
+    const s = await getDoc(ref);
+    return s.exists() ? s.data() : {};
+  },
+
+  fsBatchSaveEntries: async (uid, entriesByKey) => {
+    const batch = writeBatch(db);
+    Object.keys(entriesByKey).forEach(k => {
+      batch.set(doc(db, 'users', uid, 'entries', k), entriesByKey[k], { merge: true });
+    });
+    await batch.commit();
+  },
 };
 
 // Notify the main script that Firebase is ready
@@ -2151,9 +2196,23 @@ function setupAuth() {
   }
   state.fbReady = true;
   // Watch for auth state changes — fires immediately on load if user is signed in
-  window.fb.onAuthChange((user) => {
+  window.fb.onAuthChange(async (user) => {
+    const wasSignedOut = !state.user;
     state.user = user;
     updateUserButton();
+
+    // When a user signs in (transition from null → user), pull cloud data and merge
+    if (user && wasSignedOut) {
+      await cloudPullAndMerge();
+      // Re-render anything that depends on entries / meta flags
+      try { renderHistory(); } catch(_) {}
+      try { renderMissionBanner(); } catch(_) {}
+      // If today already has an entry now (after merge), show result screen
+      const today = getTodaysEntry();
+      if (today && state.step !== 'done') {
+        try { showTodayResult(today); } catch(_) {}
+      }
+    }
   });
 }
 
@@ -2297,11 +2356,126 @@ function dateKey(ts) {
   return `${y}-${m}-${day}`;
 }
 
+/* ================ FIRESTORE SYNC LAYER ================ */
+// Sync writes happen alongside localStorage writes. Reads stay local-first.
+// TEST_MODE → skip cloud entirely (fake user shouldn't pollute real data).
+
+function isCloudSyncEnabled() {
+  return !TEST_MODE && state.user && state.user.uid && window.fb && window.fb.fsSaveEntry;
+}
+
+// Flag keys that should be persisted to Firestore meta/state document
+const CLOUD_META_KEYS = [
+  'howru:firstEntryTs',
+  'howru:reportUnlocked',
+  'howru:missionW1Cleared',
+  'howru:notifHour',
+  'howru:notifPrompted',
+  'howru:missionTooltipSeen',
+  'howru:report_firstFreeDelivered',
+  'howru:onboarded',
+];
+
+// Best-effort cloud write — never block UI if it fails
+async function cloudSaveEntry(entry) {
+  if (!isCloudSyncEnabled()) return;
+  try {
+    await window.fb.fsSaveEntry(state.user.uid, dateKey(entry.ts), entry);
+  } catch (e) { console.warn('[cloud] saveEntry failed:', e); }
+}
+
+async function cloudSaveMetaKey(localKey, value) {
+  if (!isCloudSyncEnabled()) return;
+  // Only sync whitelisted keys
+  if (!CLOUD_META_KEYS.includes(localKey)) return;
+  try {
+    await window.fb.fsSaveMeta(state.user.uid, { [localKey]: value });
+  } catch (e) { console.warn('[cloud] saveMeta failed:', e); }
+}
+
+// Wrap localStorage.setItem so meta flag writes auto-sync to cloud
+const _origSetItem = Storage.prototype.setItem;
+Storage.prototype.setItem = function(key, value) {
+  _origSetItem.call(this, key, value);
+  if (CLOUD_META_KEYS.includes(key)) {
+    cloudSaveMetaKey(key, value);
+  }
+};
+
+// Pull cloud data and merge into localStorage (last-write-wins by ts for entries)
+async function cloudPullAndMerge() {
+  if (!isCloudSyncEnabled()) return;
+  try {
+    const [cloudEntries, cloudMeta] = await Promise.all([
+      window.fb.fsLoadAllEntries(state.user.uid),
+      window.fb.fsLoadMeta(state.user.uid),
+    ]);
+
+    // Merge entries: pick the one with larger ts
+    Object.keys(cloudEntries).forEach(dKey => {
+      const cloudE = cloudEntries[dKey];
+      const localKey = `${KEY_PREFIX}${dKey}`;
+      const localRaw = localStorage.getItem(localKey);
+      let useCloud = true;
+      if (localRaw) {
+        try {
+          const localE = JSON.parse(localRaw);
+          if ((localE.ts || 0) >= (cloudE.ts || 0)) useCloud = false;
+        } catch(_) {}
+      }
+      if (useCloud) {
+        _origSetItem.call(localStorage, localKey, JSON.stringify(cloudE));
+      }
+    });
+
+    // Merge meta flags: cloud wins (most recent device wins)
+    Object.keys(cloudMeta).forEach(k => {
+      if (CLOUD_META_KEYS.includes(k)) {
+        _origSetItem.call(localStorage, k, cloudMeta[k]);
+      }
+    });
+
+    // Push local-only entries up to cloud (entries that exist locally but not in cloud)
+    const localOnly = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k || !k.startsWith(KEY_PREFIX)) continue;
+      const dKey = k.slice(KEY_PREFIX.length);
+      if (cloudEntries[dKey]) continue; // already in cloud
+      try {
+        const v = localStorage.getItem(k);
+        if (v) localOnly[dKey] = JSON.parse(v);
+      } catch(_) {}
+    }
+    if (Object.keys(localOnly).length > 0) {
+      await window.fb.fsBatchSaveEntries(state.user.uid, localOnly);
+    }
+
+    // Push local-only meta flags
+    const localMeta = {};
+    CLOUD_META_KEYS.forEach(k => {
+      const v = localStorage.getItem(k);
+      if (v != null && cloudMeta[k] == null) {
+        localMeta[k] = v;
+      }
+    });
+    if (Object.keys(localMeta).length > 0) {
+      await window.fb.fsSaveMeta(state.user.uid, localMeta);
+    }
+
+    console.log('[cloud] pull+merge done');
+  } catch (e) {
+    console.warn('[cloud] pull+merge failed:', e);
+  }
+}
+
 async function saveEntry(entry) {
   // Key by date — same-day saves overwrite previous entry (up until midnight)
   const key = `${KEY_PREFIX}${dateKey(entry.ts)}`;
   const value = JSON.stringify(entry);
   localStorage.setItem(key, value);
+  // Best-effort cloud sync (don't await — don't block save flow)
+  cloudSaveEntry(entry);
   return { ok: true };
 }
 
