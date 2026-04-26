@@ -166,11 +166,11 @@
 
   /* ================ QUESTION ================ */
   .question {
-    padding: 28px 28px 28px;
+    padding: 16px 24px 18px;
     font-family: 'Instrument Serif', 'Pretendard Variable', serif;
-    font-size: 46px;
+    font-size: 36px;
     font-weight: 400;
-    line-height: 1.05;
+    line-height: 1.1;
     letter-spacing: -0.025em;
     color: var(--ink);
   }
@@ -204,16 +204,16 @@
 
   /* ================ LEVELS (Step 1) ================ */
   .levels {
-    padding: 4px 20px 28px;
+    padding: 4px 20px 20px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
   }
   .level {
     display: flex;
     align-items: center;
-    gap: 18px;
-    padding: 18px 22px;
+    gap: 14px;
+    padding: 12px 18px;
     background: var(--surface);
     border: none;
     border-radius: var(--r);
@@ -250,7 +250,7 @@
   }
   .level > * { pointer-events: none; }
   .level .face {
-    width: 48px; height: 48px;
+    width: 40px; height: 40px;
     flex-shrink: 0;
     display: flex;
     align-items: center;
@@ -258,12 +258,12 @@
   }
   .level .label {
     flex: 1;
-    font-size: 19px;
+    font-size: 17px;
     font-weight: 500;
     letter-spacing: -0.02em;
   }
   .level .num {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--ink-mute);
     font-weight: 500;
     font-feature-settings: "tnum";
@@ -273,20 +273,20 @@
   .current-level {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 14px 8px 10px;
+    gap: 6px;
+    padding: 0;
     margin: 0 28px 4px;
-    width: fit-content;
-    background: var(--surface);
-    border-radius: 999px;
-    box-shadow: var(--shadow-sm);
-    font-size: 13px;
+    background: transparent;
+    box-shadow: none;
+    font-size: 12px;
     font-weight: 500;
-    color: var(--ink-soft);
+    color: var(--ink-mute);
+    letter-spacing: -0.01em;
   }
-  .current-level .face {
-    width: 22px; height: 22px;
-    display: flex; align-items: center; justify-content: center;
+  .current-level .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--level-color, var(--accent));
     flex-shrink: 0;
   }
 
@@ -294,10 +294,10 @@
     padding: 4px 20px 16px;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    gap: 8px;
   }
   .reason {
-    padding: 20px 18px;
+    padding: 14px 14px;
     background: var(--surface);
     border: none;
     border-radius: var(--r);
@@ -312,7 +312,7 @@
       background 0.3s,
       color 0.3s;
     position: relative;
-    min-height: 130px;
+    min-height: 100px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -335,21 +335,21 @@
     filter: saturate(0.5);
   }
   .reason .icon {
-    width: 40px; height: 40px;
+    width: 32px; height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 22px;
+    font-size: 18px;
     border-radius: 50%;
     background: var(--bg-warm);
-    margin-bottom: 12px;
+    margin-bottom: 8px;
     transition: background 0.3s;
   }
   .reason.selected .icon {
     background: rgba(255,255,255,0.12);
   }
   .reason .text {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
     line-height: 1.2;
     letter-spacing: -0.02em;
@@ -359,16 +359,12 @@
     color: inherit;
   }
   .reason .sub-text {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--ink-mute);
-    margin-top: 4px;
-    line-height: 1.4;
+    margin-top: 3px;
+    line-height: 1.35;
     font-weight: 400;
     transition: color 0.3s;
-  }
-  .reason-full {
-    grid-column: 1 / -1;
-    min-height: 90px;
   }
 
   /* ================ NOTE ================ */
@@ -451,21 +447,21 @@
 
   /* ================ DONE / RESULT ================ */
   .done {
-    padding: 28px 28px 20px;
+    padding: 18px 24px 14px;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
   }
   .done .big-face {
-    width: 132px; height: 132px;
+    width: 96px; height: 96px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
     background: var(--surface);
     box-shadow: var(--shadow-lg);
-    margin-bottom: 16px;
+    margin-bottom: 14px;
     animation: pop 0.7s cubic-bezier(0.3, 1.5, 0.5, 1);
     position: relative;
   }
@@ -506,7 +502,7 @@
   }
   .done h2 {
     font-family: 'Instrument Serif', serif;
-    font-size: 34px;
+    font-size: 30px;
     font-weight: 400;
     font-style: italic;
     letter-spacing: -0.02em;
@@ -849,6 +845,462 @@
     box-shadow: none !important;
     color: var(--ink-mute) !important;
     font-weight: 500 !important;
+    font-size: 14px !important;
+  }
+
+  /* Notification time picker */
+  .notif-icon {
+    font-size: 36px;
+    margin-bottom: 8px;
+    line-height: 1;
+    animation: notifSwing 1.4s ease-in-out infinite;
+    transform-origin: top center;
+  }
+  @keyframes notifSwing {
+    0%, 100% { transform: rotate(0deg); }
+    20%      { transform: rotate(-12deg); }
+    40%      { transform: rotate(10deg); }
+    60%      { transform: rotate(-6deg); }
+    80%      { transform: rotate(4deg); }
+  }
+  .time-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .time-btn {
+    padding: 14px 12px;
+    border: 1.5px solid #e8e8e8;
+    background: white;
+    border-radius: 16px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink);
+    cursor: pointer;
+    letter-spacing: -0.01em;
+    transition: all 0.2s cubic-bezier(0.2,0.8,0.2,1);
+  }
+  .time-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .time-btn:active {
+    transform: scale(0.96);
+  }
+  .time-btn.selected {
+    background: var(--ink);
+    color: white;
+    border-color: var(--ink);
+    box-shadow: var(--shadow);
+  }
+
+  /* ================ MISSION BANNER ================ */
+  .mission-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 20px 12px;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: none;
+    border-radius: 16px;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    font-family: inherit;
+    color: var(--ink);
+    text-align: left;
+    width: calc(100% - 40px);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .mission-banner:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow);
+  }
+  .mission-banner:active { transform: scale(0.98); }
+  .mission-banner .pulse {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+    box-shadow: 0 0 0 0 rgba(43,182,115,0.6);
+    animation: bannerPulse 2.6s infinite;
+  }
+  @keyframes bannerPulse {
+    0%   { box-shadow: 0 0 0 0 rgba(43,182,115,0.5); }
+    50%  { box-shadow: 0 0 0 6px rgba(43,182,115,0); }
+    100% { box-shadow: 0 0 0 0 rgba(43,182,115,0); }
+  }
+  .mission-banner.cleared .pulse {
+    background: var(--accent);
+    animation: none;
+  }
+  .mission-banner .text {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: 1.4;
+  }
+  .mission-banner .text b {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .mission-banner .arrow {
+    color: var(--ink-mute);
+    font-size: 18px;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  /* ================ MISSION DETAIL MODAL ================ */
+  .mission-modal-card {
+    text-align: left;
+    padding: 28px 24px 22px;
+  }
+  .mission-modal-header {
+    margin-bottom: 18px;
+  }
+  .mission-modal-week {
+    font-family: 'Instrument Serif', serif;
+    font-size: 28px;
+    font-style: italic;
+    color: var(--ink);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  .mission-modal-dates {
+    font-size: 12px;
+    color: var(--ink-mute);
+    margin-top: 4px;
+    font-weight: 500;
+  }
+  .mission-modal-list {
+    margin-bottom: 14px;
+  }
+  .mission-task {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .mission-task:last-child { border-bottom: none; }
+  .mission-task .check {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--bg-warm);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: var(--ink-mute);
+    font-weight: 600;
+  }
+  .mission-task.done .check {
+    background: var(--accent);
+    color: white;
+  }
+  .mission-task .label {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .mission-task.done .label {
+    color: var(--ink-mute);
+    text-decoration: line-through;
+    text-decoration-color: var(--ink-mute);
+  }
+  .mission-task .progress-text {
+    font-size: 12px;
+    color: var(--ink-mute);
+    font-weight: 600;
+    font-feature-settings: "tnum";
+  }
+
+  /* Calendar in mission modal — CSS Grid with each cell taking full column width */
+  .mission-modal-calendar {
+    margin-bottom: 18px;
+    padding: 4px 0 8px;
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    row-gap: 14px;
+  }
+  .mcal-head-row,
+  .mcal-row {
+    display: contents; /* lets children participate in parent grid */
+  }
+  .mcal-head-row + .mcal-row > .mcal-cell:nth-child(1),
+  .mcal-head-row > .mcal-head:nth-child(1) {
+    /* nothing special — column 1 is first */
+  }
+  .mcal-head {
+    text-align: center;
+    font-size: 10px;
+    color: var(--ink-mute);
+    font-weight: 600;
+    line-height: 1;
+    padding-bottom: 4px;
+  }
+  .mcal-cell {
+    /* This wrapper now just preserves CSS class hooks for state styling */
+    display: contents;
+  }
+  .mcal-stamp {
+    justify-self: center;
+    align-self: center;
+    box-sizing: border-box;
+    width: 30px;
+    min-width: 30px;
+    max-width: 30px;
+    height: 30px;
+    min-height: 30px;
+    max-height: 30px;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    background: var(--bg-warm);
+    border: 1.5px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: var(--ink-mute);
+    font-weight: 600;
+    font-feature-settings: "tnum";
+    line-height: 1;
+    transition: background 0.3s, color 0.3s, border-color 0.3s;
+  }
+  .mcal-cell.done .mcal-stamp {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+    animation: stampFade 0.3s ease-out;
+  }
+  .mcal-cell.today .mcal-stamp {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .mcal-cell.future .mcal-stamp {
+    opacity: 0.4;
+  }
+  .mcal-cell.disabled .mcal-stamp {
+    background: transparent;
+    border: 1.5px dashed rgba(0,0,0,0.15);
+    color: rgba(0,0,0,0.22);
+  }
+  @keyframes stampFade {
+    0%   { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+  /* ================ MISSION CLEAR CELEBRATION MODAL ================ */
+  .mission-clear-card {
+    text-align: center;
+    padding: 36px 28px 26px;
+  }
+  .clear-burst {
+    font-size: 56px;
+    line-height: 1;
+    margin-bottom: 14px;
+    display: inline-block;
+    animation: clearBurst 0.8s cubic-bezier(0.3,1.5,0.5,1);
+  }
+  @keyframes clearBurst {
+    0%   { transform: scale(0) rotate(-30deg); opacity: 0; }
+    60%  { transform: scale(1.3) rotate(10deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  .clear-title {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 30px;
+    line-height: 1.15;
+    color: var(--ink);
+    margin: 0 0 10px;
+    letter-spacing: -0.02em;
+  }
+  .clear-desc {
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    margin: 0 0 22px;
+  }
+  .clear-rewards {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 22px;
+  }
+  .clear-reward-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: linear-gradient(135deg, rgba(43,182,115,0.08), rgba(43,182,115,0.03));
+    border: 1px solid rgba(43,182,115,0.15);
+    border-radius: 12px;
+    text-align: left;
+  }
+  .clear-reward-icon { font-size: 22px; line-height: 1; }
+  .clear-reward-text {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  /* ================ WEEKLY REPORT MODAL ================ */
+  .report-card {
+    text-align: left;
+    padding: 28px 22px 22px;
+    max-height: 88vh;
+    overflow-y: auto;
+  }
+  .report-header { margin-bottom: 18px; }
+  .report-eyebrow {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .report-dates {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 26px;
+    color: var(--ink);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  .report-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .report-stat {
+    background: rgba(0,0,0,0.025);
+    border-radius: 12px;
+    padding: 10px 6px;
+    text-align: center;
+  }
+  .report-stat-v {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 22px;
+    line-height: 1;
+    color: var(--ink);
+    font-feature-settings: "tnum";
+  }
+  .report-stat-k {
+    font-size: 10px;
+    color: var(--ink-mute);
+    margin-top: 4px;
+    font-weight: 500;
+  }
+  .report-chart-wrap {
+    height: 110px;
+    margin-bottom: 18px;
+    background: #fafafa;
+    border-radius: 12px;
+    padding: 8px;
+  }
+  .report-section {
+    background: white;
+    border: 1px solid #f0f0f0;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+  .report-section-label {
+    font-size: 11px;
+    color: var(--ink-mute);
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .report-section-value {
+    font-size: 14px;
+    color: var(--ink);
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  .report-section-value .accent {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .report-message {
+    margin: 14px 0 18px;
+    padding: 12px 14px;
+    background: rgba(43,182,115,0.06);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .report-message:empty { display: none; }
+
+  .mission-modal-reward {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    margin-bottom: 18px;
+    border: 1.5px dashed rgba(255,180,0,0.4);
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(120deg, #fff8e1 0%, #ffe89a 50%, #fff8e1 100%);
+    background-size: 250% 100%;
+    animation: rewardBreathe 2.4s ease-in-out infinite, rewardShimmer 3s linear infinite, rewardBorder 2.4s ease-in-out infinite;
+    transform-origin: center;
+  }
+  @keyframes rewardBreathe {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 rgba(255,180,0,0); }
+    50%      { transform: scale(1.03); box-shadow: 0 6px 24px rgba(255,180,0,0.45); }
+  }
+  @keyframes rewardShimmer {
+    0%   { background-position: -100% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+  @keyframes rewardBorder {
+    0%, 100% { border-color: rgba(255,180,0,0.35); }
+    50%      { border-color: rgba(255,140,0,0.85); }
+  }
+  .reward-icon {
+    font-size: 28px;
+    flex-shrink: 0;
+    display: inline-block;
+    transform-origin: 50% 80%;
+    animation: rewardSwing 1.4s ease-in-out infinite;
+    filter: drop-shadow(0 2px 6px rgba(255,140,0,0.4));
+  }
+  @keyframes rewardSwing {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    20%      { transform: rotate(-12deg) scale(1.05); }
+    40%      { transform: rotate(8deg) scale(1.05); }
+    60%      { transform: rotate(-6deg) scale(1.03); }
+    80%      { transform: rotate(4deg) scale(1.02); }
+  }
+  .reward-info { flex: 1; position: relative; z-index: 1; }
+  .reward-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+  .reward-sub {
+    font-size: 11px;
+    color: var(--ink-soft);
+    line-height: 1.4;
+  }
+
+  /* ================ REWARD SECTION (stats + chart) ================ */
+  .reward-section.locked {
+    display: none;
   }
 
   /* ================ ONBOARDING MODAL ================ */
@@ -1039,15 +1491,25 @@
         </div>
         <div class="big-face" id="doneFace">✓</div>
         <h2 id="doneTitle">기록됨</h2>
-        <div class="next-checkin" id="nextCheckin"></div>
       </div>
-      <div class="stats">
-        <div class="stat"><div class="v" id="statAvg">–</div><div class="k">평균</div></div>
-        <div class="stat"><div class="v" id="statCount">–</div><div class="k">기록</div></div>
-        <div class="stat"><div class="v" id="statStreak">–</div><div class="k">연속일</div></div>
-      </div>
-      <div class="chart-wrap">
-        <div class="chart-box"><canvas id="histChart"></canvas></div>
+
+      <!-- Mission progress banner -->
+      <button class="mission-banner" id="missionBanner" hidden>
+        <span class="pulse"></span>
+        <span class="text" id="missionBannerText">이번 주 1/3 · 2번 더 채우면 리포트가 와요</span>
+        <span class="arrow">›</span>
+      </button>
+
+      <!-- Stats + chart: hidden until weekly mission cleared -->
+      <div class="reward-section" id="rewardSection">
+        <div class="stats">
+          <div class="stat"><div class="v" id="statAvg">–</div><div class="k">평균</div></div>
+          <div class="stat"><div class="v" id="statCount">–</div><div class="k">기록</div></div>
+          <div class="stat"><div class="v" id="statStreak">–</div><div class="k">연속일</div></div>
+        </div>
+        <div class="chart-wrap">
+          <div class="chart-box"><canvas id="histChart"></canvas></div>
+        </div>
       </div>
       <div class="entries" id="entries"></div>
       <div class="actions">
@@ -1072,7 +1534,7 @@
       </svg>
       Google로 시작하기
     </button>
-    <button class="btn modal-close" id="modalCloseBtn">다음에 할게요</button>
+    <button class="btn modal-close" id="modalCloseBtn">가입 안 하고 데이터 잃어버리기</button>
   </div>
 </div>
 
@@ -1216,6 +1678,113 @@
   <div class="onboard-nav">
     <button class="onboard-skip" id="onboardSkip">건너뛰기</button>
     <button class="btn primary onboard-next" id="onboardNext">다음</button>
+  </div>
+</div>
+
+<!-- Notification permission modal -->
+<div id="notifModal" class="modal" hidden>
+  <div class="modal-backdrop" id="notifBackdrop"></div>
+  <div class="modal-card">
+    <div class="notif-icon">🔔</div>
+    <h3 class="modal-title">매일 같은 시간에<br/>알려드릴까요?</h3>
+    <p class="modal-desc">기록을 잊지 않게 부드럽게 챙겨드려요.<br/>몇 시가 좋아요?</p>
+    <div class="time-options" id="timeOptions">
+      <button class="time-btn" data-hour="20">저녁 8시</button>
+      <button class="time-btn" data-hour="21">9시</button>
+      <button class="time-btn" data-hour="22">10시</button>
+      <button class="time-btn" data-hour="23">11시</button>
+    </div>
+    <button class="btn modal-close" id="notifSkipBtn">다음에 할게요</button>
+  </div>
+</div>
+
+<!-- Mission detail modal -->
+<div id="missionModal" class="modal" hidden>
+  <div class="modal-backdrop" id="missionBackdrop"></div>
+  <div class="modal-card mission-modal-card">
+    <div class="mission-modal-header">
+      <div class="mission-modal-week" id="missionModalWeek">1주차 미션</div>
+      <div class="mission-modal-dates" id="missionModalDates">4월 21~27일</div>
+    </div>
+    <div class="mission-modal-list" id="missionModalList">
+      <!-- populated dynamically -->
+    </div>
+    <div class="mission-modal-calendar" id="missionModalCalendar">
+      <!-- Day cells populated dynamically -->
+    </div>
+    <div class="mission-modal-reward" id="missionModalReward">
+      <div class="reward-icon">💌</div>
+      <div class="reward-info">
+        <div class="reward-title">보상 · 주간 리포트</div>
+        <div class="reward-sub">일요일에 한 주를 정리한 리포트가 도착해요</div>
+      </div>
+    </div>
+    <button class="btn modal-close" id="missionModalCloseBtn">닫기</button>
+  </div>
+</div>
+
+<!-- Mission clear celebration modal -->
+<div id="missionClearModal" class="modal" hidden>
+  <div class="modal-backdrop" id="missionClearBackdrop"></div>
+  <div class="modal-card mission-clear-card">
+    <div class="clear-burst">🎉</div>
+    <h3 class="clear-title">1주차 미션<br/>완료!</h3>
+    <p class="clear-desc">주간 리포트가 열렸어요.<br/>일요일에 한 주를 정리해서 보내드릴게요.</p>
+    <div class="clear-rewards">
+      <div class="clear-reward-item">
+        <div class="clear-reward-icon">📊</div>
+        <div class="clear-reward-text">통계 · 차트 잠금 해제</div>
+      </div>
+      <div class="clear-reward-item">
+        <div class="clear-reward-icon">💌</div>
+        <div class="clear-reward-text">주간 리포트 잠금 해제</div>
+      </div>
+    </div>
+    <button class="btn primary" id="missionClearOkBtn">계속하기</button>
+  </div>
+</div>
+
+<!-- Weekly report modal -->
+<div id="reportModal" class="modal" hidden>
+  <div class="modal-backdrop" id="reportBackdrop"></div>
+  <div class="modal-card report-card">
+    <div class="report-header">
+      <div class="report-eyebrow">이번 주 리포트</div>
+      <div class="report-dates" id="reportDates">4월 20일 ~ 26일</div>
+    </div>
+
+    <div class="report-stats">
+      <div class="report-stat">
+        <div class="report-stat-v" id="reportCount">–</div>
+        <div class="report-stat-k">체크인</div>
+      </div>
+      <div class="report-stat">
+        <div class="report-stat-v" id="reportAvg">–</div>
+        <div class="report-stat-k">평균</div>
+      </div>
+      <div class="report-stat">
+        <div class="report-stat-v" id="reportGoodDays">–</div>
+        <div class="report-stat-k">좋은 날</div>
+      </div>
+    </div>
+
+    <div class="report-chart-wrap">
+      <canvas id="reportChart"></canvas>
+    </div>
+
+    <div class="report-section" id="reportHappySection">
+      <div class="report-section-label">🌟 가장 큰 행복</div>
+      <div class="report-section-value" id="reportHappy">–</div>
+    </div>
+
+    <div class="report-section" id="reportHardSection">
+      <div class="report-section-label">💭 가장 힘들게 한 것</div>
+      <div class="report-section-value" id="reportHard">–</div>
+    </div>
+
+    <div class="report-message" id="reportMessage"></div>
+
+    <button class="btn primary" id="reportCloseBtn">확인</button>
   </div>
 </div>
 
@@ -1474,7 +2043,34 @@ function setupOnboardScrollSync() {
 }
 
 /* ================ AUTH ================ */
+// Test mode: ?test=1 in URL fakes a logged-in user (no Firebase needed)
+// Test mode: ?test=1 in URL OR running inside Artifact viewer (no Firebase OAuth allowed there)
+const isArtifactViewer = (
+  location.hostname === '' ||
+  location.protocol === 'blob:' ||
+  location.protocol === 'data:' ||
+  /claude\.ai|anthropic/i.test(location.hostname) ||
+  location.hostname === 'localhost' && location.port === '' // some sandboxed iframes
+);
+const TEST_MODE = new URLSearchParams(location.search).has('test') || isArtifactViewer;
+const FAKE_USER = {
+  uid: 'test-user-local',
+  displayName: '테스트 사용자',
+  email: 'test@howru.local',
+  photoURL: null,
+  isTest: true,
+};
+
 function setupAuth() {
+  if (TEST_MODE) {
+    // Skip Firebase entirely; pretend user is signed in
+    state.fbReady = true;
+    state.user = FAKE_USER;
+    updateUserButton();
+    showTestBadge();
+    console.log('[TEST MODE] Fake user signed in:', FAKE_USER);
+    return;
+  }
   if (!window.fb) {
     // Firebase module not loaded yet — wait for ready event
     window.addEventListener('firebase-ready', setupAuth, { once: true });
@@ -1486,6 +2082,26 @@ function setupAuth() {
     state.user = user;
     updateUserButton();
   });
+}
+
+function showTestBadge() {
+  if (document.getElementById('testBadge')) return;
+  const badge = document.createElement('div');
+  badge.id = 'testBadge';
+  badge.textContent = 'TEST MODE';
+  badge.style.cssText = `
+    position: fixed; top: 0; left: 50%;
+    transform: translateX(-50%);
+    background: #ff6b35; color: white;
+    font-size: 10px; font-weight: 700;
+    padding: 3px 12px;
+    border-radius: 0 0 10px 10px;
+    z-index: 9999;
+    letter-spacing: 0.5px;
+    font-family: -apple-system, sans-serif;
+    pointer-events: none;
+  `;
+  document.body.appendChild(badge);
 }
 
 function updateUserButton() {
@@ -1514,15 +2130,28 @@ function toggleUserMenu() {
   if (state.user) {
     const name = state.user.displayName || '사용자';
     const email = state.user.email || '';
+    const currentHour = localStorage.getItem(NOTIF_TIME_KEY);
+    const notifLabel = currentHour ? `알림 · 저녁 ${currentHour}시` : '알림 설정';
     menu.innerHTML = `
       <div class="user-menu-info">
         <div class="user-menu-name">${escapeHtml(name)}</div>
         <div class="user-menu-email">${escapeHtml(email)}</div>
       </div>
+      <button class="user-menu-item" id="notifSettingsBtn">${notifLabel}</button>
       <button class="user-menu-item" id="signOutBtn">로그아웃</button>
     `;
+    $('notifSettingsBtn').onclick = () => {
+      menu.hidden = true;
+      openNotifModal({ fromSettings: true });
+    };
     $('signOutBtn').onclick = async () => {
       menu.hidden = true;
+      if (TEST_MODE) {
+        // In test mode, just clear fake user and update UI
+        state.user = null;
+        updateUserButton();
+        return;
+      }
       try { await window.fb.signOut(); } catch(e) { console.error(e); }
     };
   } else {
@@ -1631,6 +2260,543 @@ function getTodaysEntry() {
   } catch(e) { return null; }
 }
 
+/* ================ WEEKLY MISSION (v1) ================ */
+// Calendar week boundaries (Mon 00:00 → Sun 23:59)
+function getWeekStart(ts = Date.now()) {
+  const d = new Date(ts);
+  d.setHours(0, 0, 0, 0);
+  // Sunday=0..Saturday=6 → shift so Monday=0..Sunday=6
+  const day = (d.getDay() + 6) % 7;
+  d.setDate(d.getDate() - day);
+  return d;
+}
+function getWeekEnd(ts = Date.now()) {
+  const start = getWeekStart(ts);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 6);
+  end.setHours(23, 59, 59, 999);
+  return end;
+}
+
+// Mission-week boundaries — same as calendar week EXCEPT week 1 may extend
+// for users who signed up on Fri/Sat/Sun (extends to next Sunday).
+function getMissionWeekRange(ts = Date.now()) {
+  const firstTs = getFirstEntryTs();
+  if (!firstTs) {
+    // No entries yet — treat current calendar week as week 1
+    return { start: getWeekStart(ts), end: getWeekEnd(ts), weekNum: 1 };
+  }
+
+  // Determine week 1's actual end date
+  // If user signed up Fri/Sat/Sun (day-of-week >= 5 where Mon=1..Sun=7), extend by a week
+  const firstDate = new Date(firstTs);
+  const firstDay = firstDate.getDay(); // Sun=0..Sat=6
+  // Friday=5, Saturday=6, Sunday=0 → all need extension
+  const isFridayOrLater = (firstDay >= 5 || firstDay === 0);
+
+  const week1Start = getWeekStart(firstTs);
+  const week1End = new Date(week1Start);
+  if (isFridayOrLater) {
+    week1End.setDate(week1End.getDate() + 13); // 2 calendar weeks - 1 day
+  } else {
+    week1End.setDate(week1End.getDate() + 6); // standard 1 calendar week
+  }
+  week1End.setHours(23, 59, 59, 999);
+
+  const now = new Date(ts);
+
+  // Are we still inside week 1?
+  if (now.getTime() <= week1End.getTime()) {
+    return { start: week1Start, end: week1End, weekNum: 1 };
+  }
+
+  // Past week 1 — calculate which user-week we're in based on calendar weeks
+  // since week 1 ended. After week 1, every week is a normal calendar week (Mon-Sun).
+  const week2Start = new Date(week1End);
+  week2Start.setDate(week2Start.getDate() + 1);
+  week2Start.setHours(0, 0, 0, 0);
+
+  const diffMs = now.getTime() - week2Start.getTime();
+  const weeksAfterW1 = Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
+  const currentWeekStart = new Date(week2Start);
+  currentWeekStart.setDate(currentWeekStart.getDate() + weeksAfterW1 * 7);
+  const currentWeekEnd = new Date(currentWeekStart);
+  currentWeekEnd.setDate(currentWeekEnd.getDate() + 6);
+  currentWeekEnd.setHours(23, 59, 59, 999);
+  return {
+    start: currentWeekStart,
+    end: currentWeekEnd,
+    weekNum: 2 + weeksAfterW1,
+  };
+}
+
+function isInThisMissionWeek(ts) {
+  const range = getMissionWeekRange();
+  const t = new Date(ts).getTime();
+  return t >= range.start.getTime() && t <= range.end.getTime();
+}
+
+// Count check-ins in the user's current mission week
+function getCheckinsThisWeek() {
+  let count = 0;
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (!k || !k.startsWith(KEY_PREFIX)) continue;
+    try {
+      const v = localStorage.getItem(k);
+      if (!v) continue;
+      const e = JSON.parse(v);
+      if (isInThisMissionWeek(e.ts)) count++;
+    } catch(_) {}
+  }
+  return count;
+}
+
+const REPORT_UNLOCKED_KEY = 'howru:reportUnlocked';
+const MISSION_W1_CLEARED_KEY = 'howru:missionW1Cleared';
+const FIRST_ENTRY_TS_KEY = 'howru:firstEntryTs';
+
+function isReportUnlocked() {
+  return localStorage.getItem(REPORT_UNLOCKED_KEY) === '1';
+}
+function unlockReport() {
+  localStorage.setItem(REPORT_UNLOCKED_KEY, '1');
+  localStorage.setItem(MISSION_W1_CLEARED_KEY, '1');
+}
+function isMissionW1Cleared() {
+  return localStorage.getItem(MISSION_W1_CLEARED_KEY) === '1';
+}
+
+// Find the timestamp of the user's earliest entry (cached after first lookup)
+function getFirstEntryTs() {
+  const cached = localStorage.getItem(FIRST_ENTRY_TS_KEY);
+  if (cached) return parseInt(cached, 10);
+  let earliest = null;
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (!k || !k.startsWith(KEY_PREFIX)) continue;
+    try {
+      const v = localStorage.getItem(k);
+      if (!v) continue;
+      const e = JSON.parse(v);
+      if (earliest === null || e.ts < earliest) earliest = e.ts;
+    } catch(_) {}
+  }
+  if (earliest !== null) {
+    localStorage.setItem(FIRST_ENTRY_TS_KEY, String(earliest));
+  }
+  return earliest;
+}
+
+// Which user-week are they in (1, 2, 3, ...)
+function getUserWeekNumber() {
+  return getMissionWeekRange().weekNum;
+}
+
+// Mission targets per user-week (progressive)
+const MISSION_TARGETS = {
+  1: 3,
+  2: 4,
+  3: 5,
+  // Week 4+ falls back to 5 until we design more
+};
+function getMissionTargetForWeek(weekNum) {
+  return MISSION_TARGETS[weekNum] || 5;
+}
+
+// Snapshot the user's current weekly mission progress
+function getWeeklyMissionState() {
+  const range = getMissionWeekRange();
+  const userWeek = range.weekNum;
+  const target = getMissionTargetForWeek(userWeek);
+  const checkins = getCheckinsThisWeek();
+  const hasAnyEntry = getFirstEntryTs() !== null;
+  const firstDone = hasAnyEntry;
+  const targetDone = checkins >= target || (userWeek === 1 && isMissionW1Cleared());
+  return {
+    userWeek,
+    firstDone,
+    targetDone,
+    checkinsThisWeek: checkins,
+    target,
+    progress: Math.min(checkins / target, 1),
+    weekStart: range.start,
+    weekEnd: range.end,
+    rewardUnlocked: isReportUnlocked(),
+  };
+}
+
+/* ================ MISSION UI RENDERING ================ */
+function renderMissionBanner() {
+  const banner = $('missionBanner');
+  const text = $('missionBannerText');
+  if (!banner || !text) return;
+
+  const m = getWeeklyMissionState();
+  const remain = Math.max(0, m.target - m.checkinsThisWeek);
+
+  // Banner shows after the user has at least one entry
+  if (!m.firstDone) {
+    banner.hidden = true;
+  } else {
+    banner.hidden = false;
+    banner.classList.toggle('cleared', m.targetDone);
+
+    if (m.targetDone) {
+      text.innerHTML = `${m.userWeek}주차 미션 완료 ✓ <b>일요일 리포트 대기 중</b>`;
+    } else if (m.checkinsThisWeek === 0) {
+      text.innerHTML = `${m.userWeek}주차 미션 · ${m.target}번 채우면 <b>리포트</b>가 와요`;
+    } else if (remain === 1) {
+      text.innerHTML = `이번 주 ${m.checkinsThisWeek}번 · <b>1번만 더</b>!`;
+    } else {
+      text.innerHTML = `이번 주 ${m.checkinsThisWeek}번 · <b>${remain}번</b> 더 채우면 리포트`;
+    }
+  }
+
+  // Hide stats + chart entirely until reward is unlocked
+  const section = $('rewardSection');
+  if (section) {
+    section.classList.toggle('locked', !m.rewardUnlocked);
+  }
+}
+
+function openMissionModal() {
+  const modal = $('missionModal');
+  if (!modal) return;
+  const m = getWeeklyMissionState();
+
+  // Header
+  $('missionModalWeek').textContent = `${m.userWeek}주차 미션`;
+  const fmt = (d) => `${d.getMonth()+1}월 ${d.getDate()}일`;
+  $('missionModalDates').textContent = `${fmt(m.weekStart)} ~ ${fmt(m.weekEnd)}`;
+
+  // Tasks — only show the count-based mission (first task hidden per design)
+  const list = $('missionModalList');
+  const targetTask = m.targetDone
+    ? `<div class="mission-task done"><div class="check">✓</div><div class="label">이번 주 ${m.target}번 체크인하기</div><div class="progress-text">${m.checkinsThisWeek}/${m.target}</div></div>`
+    : `<div class="mission-task"><div class="check">·</div><div class="label">이번 주 ${m.target}번 체크인하기</div><div class="progress-text">${m.checkinsThisWeek}/${m.target}</div></div>`;
+  list.innerHTML = targetTask;
+
+  // Calendar — flex rows with space-between (avoids subpixel grid drift).
+  // Always 7-column rows (Mon~Sun); week 1 extended → 2 rows.
+  const cal = $('missionModalCalendar');
+  const todayKey = dateKey(Date.now());
+  const start = new Date(m.weekStart);
+  const end = new Date(m.weekEnd);
+  const oneDay = 24 * 60 * 60 * 1000;
+
+  const firstEntryTs = getFirstEntryTs();
+  const signupDateStartMs = firstEntryTs
+    ? new Date(new Date(firstEntryTs).setHours(0,0,0,0)).getTime()
+    : null;
+
+  // Build all date cells first, then chunk into rows of 7
+  const dateCells = [];
+  for (let t = start.getTime(); t <= end.getTime(); t += oneDay) {
+    const d = new Date(t);
+    const key = dateKey(t);
+    const dateNum = d.getDate();
+
+    const hasEntry = !!localStorage.getItem(`${KEY_PREFIX}${key}`);
+    const isToday = (key === todayKey);
+    const isFuture = (t > Date.now() && !isToday);
+    const isPreSignup = signupDateStartMs !== null && t < signupDateStartMs;
+
+    const cls = ['mcal-cell'];
+    let stampContent = String(dateNum);
+    if (isPreSignup) cls.push('disabled');
+    else if (hasEntry) { cls.push('done'); stampContent = '✓'; }
+    else if (isToday) cls.push('today');
+    else if (isFuture) cls.push('future');
+
+    dateCells.push(`<div class="${cls.join(' ')}"><div class="mcal-stamp">${stampContent}</div></div>`);
+  }
+
+  // Header row (월~일)
+  const headerRow = '<div class="mcal-row mcal-head-row">' +
+    ['월','화','수','목','금','토','일'].map(d => `<div class="mcal-head">${d}</div>`).join('') +
+    '</div>';
+
+  // Chunk date cells into rows of 7 (the start is always Monday by design)
+  const dateRows = [];
+  for (let i = 0; i < dateCells.length; i += 7) {
+    dateRows.push('<div class="mcal-row">' + dateCells.slice(i, i + 7).join('') + '</div>');
+  }
+
+  cal.innerHTML = headerRow + dateRows.join('');
+
+  modal.hidden = false;
+}
+
+function closeMissionModal() {
+  const modal = $('missionModal');
+  if (modal) modal.hidden = true;
+}
+
+/* ================ STEP 3: MISSION CLEAR CELEBRATION ================ */
+function checkMissionClearAndCelebrate() {
+  // Should we trigger? Only when:
+  // 1. Mission for current week just hit target
+  // 2. Reward not yet unlocked (so this fires once globally)
+  if (isReportUnlocked()) return false;
+  const m = getWeeklyMissionState();
+  if (!m.targetDone) return false;
+
+  // Permanently mark unlocked
+  unlockReport();
+  // Show celebration after a short pause so confetti reads first
+  setTimeout(() => openMissionClearModal(), 1200);
+  return true;
+}
+
+function openMissionClearModal() {
+  const modal = $('missionClearModal');
+  if (!modal) return;
+  // Update title to current week number
+  const m = getWeeklyMissionState();
+  const titleEl = modal.querySelector('.clear-title');
+  if (titleEl) titleEl.innerHTML = `${m.userWeek}주차 미션<br/>완료!`;
+  modal.hidden = false;
+  // Extra celebration confetti
+  setTimeout(() => fireMissionClearConfetti(), 200);
+}
+
+function closeMissionClearModal() {
+  const modal = $('missionClearModal');
+  if (modal) modal.hidden = true;
+  // After closing, refresh the result screen so the now-unlocked stats/chart appear
+  renderMissionBanner();
+  refreshStatsAndChart();
+}
+
+function fireMissionClearConfetti() {
+  if (typeof confetti !== 'function') return;
+  // Gold + green burst
+  const goldGreen = ['#ffc107', '#ffb300', '#2bb673', '#8fd4a3', '#ffe89a'];
+  // Center burst
+  confetti({
+    particleCount: 80,
+    spread: 90,
+    startVelocity: 45,
+    origin: { x: 0.5, y: 0.55 },
+    colors: goldGreen,
+    scalar: 1.1,
+  });
+  // Two side cannons
+  setTimeout(() => {
+    confetti({ particleCount: 40, angle: 60, spread: 55, origin: { x: 0, y: 0.7 }, colors: goldGreen });
+    confetti({ particleCount: 40, angle: 120, spread: 55, origin: { x: 1, y: 0.7 }, colors: goldGreen });
+  }, 200);
+}
+
+function refreshStatsAndChart() {
+  // Re-run the existing render path to redraw stats + chart now that section is unlocked
+  if (typeof renderHistory === 'function') renderHistory();
+}
+
+/* ================ STEP 4: WEEKLY REPORT ================ */
+const REPORT_SEEN_PREFIX = 'howru:report_seen_';
+const REPORT_FIRSTFREE_KEY = 'howru:report_firstFreeDelivered';
+
+function getWeekId(ts = Date.now()) {
+  // ISO-style year+week id, e.g. "2026-W17"
+  const d = new Date(ts);
+  d.setHours(0, 0, 0, 0);
+  // Move to nearest Thursday: current date + 4 - current day number
+  // Make Sunday's day number 7
+  const day = d.getDay() || 7;
+  d.setDate(d.getDate() + 4 - day);
+  const yearStart = new Date(d.getFullYear(), 0, 1);
+  const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return `${d.getFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+}
+
+// Should we show the weekly report on app open?
+function shouldShowWeeklyReport() {
+  const now = new Date();
+  const day = now.getDay(); // Sun=0, Mon=1
+  // Window: Sunday all day, Monday all day
+  if (day !== 0 && day !== 1) return false;
+
+  // Determine which week's report we'd be showing
+  // On Sunday: current calendar week
+  // On Monday: previous calendar week (last Sunday's week)
+  let reportTs = now.getTime();
+  if (day === 1) reportTs = reportTs - 24 * 60 * 60 * 1000;
+
+  const weekId = getWeekId(reportTs);
+
+  // Already seen?
+  if (localStorage.getItem(REPORT_SEEN_PREFIX + weekId) === '1') return false;
+
+  // Did the user have at least one entry in that week?
+  const ws = getWeekStart(reportTs);
+  const we = getWeekEnd(reportTs);
+  const entries = getEntriesInRange(ws.getTime(), we.getTime());
+  if (entries.length < 1) return false;
+
+  // 1주차 free pass: if reward not unlocked yet, allow once
+  const rewardUnlocked = isReportUnlocked();
+  const firstFreeUsed = localStorage.getItem(REPORT_FIRSTFREE_KEY) === '1';
+  if (!rewardUnlocked && firstFreeUsed) return false;
+
+  return { weekId, weekStart: ws, weekEnd: we, entries, isFirstFree: !rewardUnlocked && !firstFreeUsed };
+}
+
+function getEntriesInRange(startMs, endMs) {
+  const out = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (!k || !k.startsWith(KEY_PREFIX)) continue;
+    try {
+      const v = localStorage.getItem(k);
+      if (!v) continue;
+      const e = JSON.parse(v);
+      if (e.ts >= startMs && e.ts <= endMs) out.push(e);
+    } catch(_) {}
+  }
+  return out.sort((a, b) => a.ts - b.ts);
+}
+
+function summarizeReasons(entries, levelMin, levelMax) {
+  const counts = {};
+  entries.forEach(e => {
+    if (e.level < levelMin || e.level > levelMax) return;
+    (e.reasons || []).forEach(r => {
+      if (r === 'unknown') return;
+      counts[r] = (counts[r] || 0) + 1;
+    });
+  });
+  if (Object.keys(counts).length === 0) return null;
+  const max = Math.max(...Object.values(counts));
+  const winners = Object.keys(counts).filter(k => counts[k] === max);
+  return { winners, count: max };
+}
+
+function renderWeeklyReport(reportInfo) {
+  const { weekId, weekStart, weekEnd, entries, isFirstFree } = reportInfo;
+
+  // Dates
+  const fmt = d => `${d.getMonth()+1}월 ${d.getDate()}일`;
+  $('reportDates').textContent = `${fmt(weekStart)} ~ ${fmt(weekEnd)}`;
+
+  // Stats
+  const count = entries.length;
+  const avg = count > 0 ? (entries.reduce((s, e) => s + e.level, 0) / count) : 0;
+  const goodDays = entries.filter(e => e.level >= 4).length;
+  $('reportCount').textContent = count;
+  $('reportAvg').textContent = avg.toFixed(1);
+  $('reportGoodDays').textContent = goodDays;
+
+  // Happy / hard reasons
+  const happy = summarizeReasons(entries, 4, 5);
+  const hard = summarizeReasons(entries, 1, 2);
+
+  const reasonLabel = (k) => (REASONS_MATRIX[k] && REASONS_MATRIX[k].label) || k;
+  if (happy) {
+    const names = happy.winners.map(reasonLabel).join(', ');
+    $('reportHappy').innerHTML = `<span class="accent">${escapeHtml(names)}</span> · ${happy.count}번`;
+    $('reportHappySection').style.display = '';
+  } else {
+    $('reportHappySection').style.display = 'none';
+  }
+  if (hard) {
+    const names = hard.winners.map(reasonLabel).join(', ');
+    $('reportHard').innerHTML = `<span class="accent">${escapeHtml(names)}</span> · ${hard.count}번`;
+    $('reportHardSection').style.display = '';
+  } else {
+    $('reportHardSection').style.display = 'none';
+  }
+
+  // Message — special copy for 1주차 free pass
+  const msg = $('reportMessage');
+  if (isFirstFree) {
+    msg.textContent = '이번엔 짧게 만났네요. 다음 주는 3번 채우면 다시 받을 수 있어요!';
+  } else if (count >= 5) {
+    msg.textContent = `${count}번 채웠어요. 다음 주에도 만나요 👋`;
+  } else if (count >= 3) {
+    msg.textContent = '꾸준히 기록하고 있어요. 다음 주에도 함께해요.';
+  } else {
+    msg.textContent = '';
+  }
+
+  // Mark seen + first-free used
+  localStorage.setItem(REPORT_SEEN_PREFIX + weekId, '1');
+  if (isFirstFree) {
+    localStorage.setItem(REPORT_FIRSTFREE_KEY, '1');
+  }
+
+  // Chart
+  drawReportChart(entries, weekStart, weekEnd);
+}
+
+function drawReportChart(entries, weekStart, weekEnd) {
+  const canvas = $('reportChart');
+  if (!canvas || typeof Chart === 'undefined') return;
+  // Bucket entries by day-of-week (Mon=0..Sun=6)
+  const points = [];
+  const labels = ['월','화','수','목','금','토','일'];
+  const oneDay = 24 * 60 * 60 * 1000;
+  for (let t = weekStart.getTime(); t <= weekEnd.getTime(); t += oneDay) {
+    const key = dateKey(t);
+    const entry = entries.find(e => dateKey(e.ts) === key);
+    points.push(entry ? entry.level : null);
+  }
+  // Destroy old chart if any
+  if (window._reportChartInstance) {
+    try { window._reportChartInstance.destroy(); } catch(_) {}
+  }
+  const ctx = canvas.getContext('2d');
+  window._reportChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: points,
+        borderColor: '#2bb673',
+        borderWidth: 2.5,
+        tension: 0.4,
+        spanGaps: true,
+        pointRadius: 4,
+        pointBackgroundColor: '#2bb673',
+        pointBorderColor: 'white',
+        pointBorderWidth: 2,
+        fill: true,
+        backgroundColor: ctx2 => {
+          const c = ctx2.chart.ctx;
+          const g = c.createLinearGradient(0, 0, 0, 100);
+          g.addColorStop(0, 'rgba(43,182,115,0.18)');
+          g.addColorStop(1, 'rgba(43,182,115,0)');
+          return g;
+        },
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      scales: {
+        y: { min: 0.5, max: 5.5, display: false },
+        x: { grid: { display: false }, ticks: { color: '#9a9a9a', font: { size: 10 } } },
+      },
+    },
+  });
+}
+
+function openReportIfDue() {
+  const info = shouldShowWeeklyReport();
+  if (!info) return;
+  const modal = $('reportModal');
+  if (!modal) return;
+  renderWeeklyReport(info);
+  modal.hidden = false;
+}
+
+function closeReportModal() {
+  const modal = $('reportModal');
+  if (modal) modal.hidden = true;
+}
+
 const $ = (id) => document.getElementById(id);
 function escapeHtml(s) {
   return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1687,7 +2853,9 @@ function renderReasons() {
   const host = $('reasons');
   host.innerHTML = '';
   const lv = LEVELS.find(l => l.n === state.level);
-  $('currentLevelBadge').innerHTML = `<span class="face">${faceSVG(lv.n, 22)}</span><span>${lv.k}</span>`;
+  const badge = $('currentLevelBadge');
+  badge.innerHTML = `<span class="dot"></span><span>${lv.k}</span>`;
+  badge.style.setProperty('--level-color', LEVEL_HEX[lv.n]);
 
   const q = $('reasonQuestion');
   const variant = variantFor(state.level);
@@ -1700,7 +2868,7 @@ function renderReasons() {
   REASON_ORDER.forEach((k, i) => {
     const r = REASONS_MATRIX[k];
     const b = document.createElement('button');
-    b.className = 'reason' + (k === 'unknown' ? ' reason-full' : '');
+    b.className = 'reason';
     b.dataset.key = k;
     b.style.animationDelay = `${i*40}ms`;
     const icon = r[`icon_${variant}`];
@@ -1902,6 +3070,105 @@ function celebrateOnce() {
   doneEl.classList.add('celebrate');
 }
 
+/* ================ NOTIFICATION REMINDER ================ */
+const NOTIF_PROMPTED_KEY = 'howru:notifPrompted';
+const NOTIF_TIME_KEY = 'howru:notifHour';
+
+function shouldPromptNotif() {
+  // Require user to be signed in — no point notifying unauthenticated users
+  if (!state.user) return false;
+  // Only prompt once. If user already chose a time OR explicitly skipped, don't ask again.
+  if (localStorage.getItem(NOTIF_PROMPTED_KEY)) return false;
+  // Don't prompt if the browser doesn't support notifications
+  if (!('Notification' in window)) return false;
+  // Don't prompt if permission already denied (user already said no at OS level)
+  if (Notification.permission === 'denied') return false;
+  return true;
+}
+
+function markNotifPrompted() {
+  localStorage.setItem(NOTIF_PROMPTED_KEY, '1');
+}
+
+let notifModalContext = 'firstTime'; // 'firstTime' | 'settings'
+
+function openNotifModal(opts = {}) {
+  const m = $('notifModal');
+  if (!m) return;
+  notifModalContext = opts.fromSettings ? 'settings' : 'firstTime';
+
+  // Update title/desc based on context
+  const title = m.querySelector('.modal-title');
+  const desc = m.querySelector('.modal-desc');
+  if (notifModalContext === 'settings') {
+    title.innerHTML = '알림 설정';
+    desc.textContent = '받고 싶은 시간을 선택하세요.';
+  } else {
+    title.innerHTML = '매일 같은 시간에<br/>알려드릴까요?';
+    desc.innerHTML = '기록을 잊지 않게 부드럽게 챙겨드려요.<br/>몇 시가 좋아요?';
+  }
+
+  // Reflect current selection
+  const currentHour = localStorage.getItem(NOTIF_TIME_KEY);
+  document.querySelectorAll('.time-btn').forEach(b => {
+    b.classList.toggle('selected', currentHour && b.dataset.hour === currentHour);
+  });
+
+  // Update skip button label depending on context
+  const skipBtn = $('notifSkipBtn');
+  if (skipBtn) {
+    if (notifModalContext === 'settings' && currentHour) {
+      skipBtn.textContent = '알림 받지 않기';
+    } else if (notifModalContext === 'settings') {
+      skipBtn.textContent = '닫기';
+    } else {
+      skipBtn.textContent = '다음에 할게요';
+    }
+  }
+
+  m.hidden = false;
+}
+
+function closeNotifModal() {
+  const m = $('notifModal');
+  if (m) m.hidden = true;
+  // Only mark as "prompted" the first time — don't re-trigger after settings visits
+  if (notifModalContext === 'firstTime') {
+    markNotifPrompted();
+  }
+}
+
+function disableNotif() {
+  // User explicitly turned off — clear stored hour
+  localStorage.removeItem(NOTIF_TIME_KEY);
+  closeNotifModal();
+}
+
+async function selectNotifTime(hour) {
+  // Mark UI selection visually
+  document.querySelectorAll('.time-btn').forEach(b => {
+    b.classList.toggle('selected', b.dataset.hour == String(hour));
+  });
+
+  // Request browser notification permission
+  let permission = Notification.permission;
+  if (permission === 'default') {
+    try {
+      permission = await Notification.requestPermission();
+    } catch (e) { permission = 'denied'; }
+  }
+
+  if (permission === 'granted') {
+    // Save preference (actual scheduled push will be wired in Phase 2)
+    localStorage.setItem(NOTIF_TIME_KEY, String(hour));
+    // Brief visual confirmation, then close
+    setTimeout(() => closeNotifModal(), 500);
+  } else {
+    // Permission denied — close anyway, user made a choice
+    setTimeout(() => closeNotifModal(), 300);
+  }
+}
+
 async function save() {
   if (!state.level || state.reasons.length === 0) return;
   const entry = {
@@ -1929,7 +3196,7 @@ async function completeSave(entry) {
   try {
     await saveEntry(entry);
     const lv = LEVELS.find(l => l.n === entry.level);
-    $('doneFace').innerHTML = faceSVG(lv.n, 96);
+    $('doneFace').innerHTML = faceSVG(lv.n, 68);
     const titles = {
       5: '좋은 날이었네',
       4: '잘 보냈어',
@@ -1940,11 +3207,18 @@ async function completeSave(entry) {
     $('doneTitle').textContent = titles[entry.level];
     showScreen('result');
     renderHistory();
+    renderMissionBanner();
     // Celebrate fresh save with confetti + bounce animation
     setTimeout(() => {
       celebrateOnce();
       fireConfetti(entry.level);
     }, 100);
+    // Check if this save just cleared the weekly mission (1주차 미션 등)
+    checkMissionClearAndCelebrate();
+    // After confetti settles, prompt for notification time (only once per device)
+    if (shouldPromptNotif()) {
+      setTimeout(() => openNotifModal(), 2400);
+    }
     if ($('saveBtn')) {
       $('saveBtn').disabled = false;
       $('saveBtn').textContent = '저장';
@@ -2214,16 +3488,59 @@ function initApp() {
   if (onboardSkipBtn) onboardSkipBtn.addEventListener('click', closeOnboarding);
   setupOnboardScrollSync();
 
+  // Notification modal handlers
+  document.querySelectorAll('.time-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const hour = parseInt(btn.dataset.hour, 10);
+      selectNotifTime(hour);
+    });
+  });
+  const notifSkip = $('notifSkipBtn');
+  const notifBackdrop = $('notifBackdrop');
+  if (notifSkip) notifSkip.addEventListener('click', () => {
+    const currentHour = localStorage.getItem(NOTIF_TIME_KEY);
+    if (notifModalContext === 'settings' && currentHour) {
+      disableNotif();
+    } else {
+      closeNotifModal();
+    }
+  });
+  if (notifBackdrop) notifBackdrop.addEventListener('click', closeNotifModal);
+
+  // Mission banner + detail modal handlers
+  const banner = $('missionBanner');
+  if (banner) banner.addEventListener('click', openMissionModal);
+  const missionClose = $('missionModalCloseBtn');
+  const missionBackdrop = $('missionBackdrop');
+  if (missionClose) missionClose.addEventListener('click', closeMissionModal);
+  if (missionBackdrop) missionBackdrop.addEventListener('click', closeMissionModal);
+
+  // Mission clear celebration handlers
+  const clearOk = $('missionClearOkBtn');
+  const clearBackdrop = $('missionClearBackdrop');
+  if (clearOk) clearOk.addEventListener('click', closeMissionClearModal);
+  if (clearBackdrop) clearBackdrop.addEventListener('click', closeMissionClearModal);
+
+  // Weekly report handlers
+  const reportClose = $('reportCloseBtn');
+  const reportBackdrop = $('reportBackdrop');
+  if (reportClose) reportClose.addEventListener('click', closeReportModal);
+  if (reportBackdrop) reportBackdrop.addEventListener('click', closeReportModal);
+
   // If today already has an entry, skip check-in and show the journal
   const today = getTodaysEntry();
   if (today) {
     showTodayResult(today);
   }
+
+  // Show weekly report if it's Sunday/Monday and conditions are met
+  // Defer slightly so the main UI settles first
+  setTimeout(() => openReportIfDue(), 800);
 }
 
 function showTodayResult(entry) {
   const lv = LEVELS.find(l => l.n === entry.level);
-  $('doneFace').innerHTML = faceSVG(lv.n, 96);
+  $('doneFace').innerHTML = faceSVG(lv.n, 68);
   const titles = {
     5: '좋은 날이었네',
     4: '잘 보냈어',
@@ -2234,6 +3551,7 @@ function showTodayResult(entry) {
   $('doneTitle').textContent = titles[entry.level];
   showScreen('result');
   renderHistory();
+  renderMissionBanner();
 }
 
 if (document.readyState === 'loading') {
