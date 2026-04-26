@@ -645,6 +645,32 @@
     flex-shrink: 0;
   }
   .entry .e-body { flex: 1; min-width: 0; }
+  .entry .e-edit {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0.55;
+    transition: opacity 0.2s, background 0.2s, transform 0.1s;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: -2px;
+    margin-right: -4px;
+  }
+  .entry .e-edit:hover {
+    opacity: 1;
+    background: rgba(0,0,0,0.05);
+  }
+  .entry .e-edit:active {
+    transform: scale(0.92);
+  }
   .entry .e-meta {
     font-size: 11px;
     color: var(--ink-mute);
@@ -1568,7 +1594,7 @@
         </div>
         <button class="mission-banner" id="missionBanner" hidden>
           <span class="pulse"></span>
-          <span class="text" id="missionBannerText">이번 주 1/3 · 2번 더 채우면 리포트가 와요</span>
+          <span class="text" id="missionBannerText">이번 주 1/3 · 2회 더 채우면 리포트가 와요</span>
           <span class="arrow">›</span>
         </button>
       </div>
@@ -2692,11 +2718,11 @@ function renderMissionBanner() {
     if (m.targetDone) {
       text.innerHTML = `${m.userWeek}주차 미션 완료 ✓ <b>일요일 리포트 대기 중</b>`;
     } else if (m.checkinsThisWeek === 0) {
-      text.innerHTML = `${m.userWeek}주차 미션 · ${m.target}번 채우면 <b>리포트</b>가 와요`;
+      text.innerHTML = `${m.userWeek}주차 미션 · ${m.target}회 채우면 <b>리포트</b>가 와요`;
     } else if (remain === 1) {
-      text.innerHTML = `이번 주 ${m.checkinsThisWeek}번 · <b>1번만 더</b>!`;
+      text.innerHTML = `이번 주 ${m.checkinsThisWeek}회 · <b>1회만 더</b>!`;
     } else {
-      text.innerHTML = `이번 주 ${m.checkinsThisWeek}번 · <b>${remain}번</b> 더 채우면 리포트`;
+      text.innerHTML = `이번 주 ${m.checkinsThisWeek}회 · <b>${remain}회</b> 더 채우면 리포트`;
     }
   }
 
@@ -2739,8 +2765,8 @@ function openMissionModal() {
   // Tasks — only show the count-based mission (first task hidden per design)
   const list = $('missionModalList');
   const targetTask = m.targetDone
-    ? `<div class="mission-task done"><div class="check">✓</div><div class="label">이번 주 ${m.target}번 체크인하기</div><div class="progress-text">${m.checkinsThisWeek}/${m.target}</div></div>`
-    : `<div class="mission-task"><div class="check">·</div><div class="label">이번 주 ${m.target}번 체크인하기</div><div class="progress-text">${m.checkinsThisWeek}/${m.target}</div></div>`;
+    ? `<div class="mission-task done"><div class="check">✓</div><div class="label">이번 주 ${m.target}회 체크인하기</div><div class="progress-text">${m.checkinsThisWeek}/${m.target}</div></div>`
+    : `<div class="mission-task"><div class="check">·</div><div class="label">이번 주 ${m.target}회 체크인하기</div><div class="progress-text">${m.checkinsThisWeek}/${m.target}</div></div>`;
   list.innerHTML = targetTask;
 
   // Calendar — flex rows with space-between (avoids subpixel grid drift).
@@ -2958,17 +2984,17 @@ function renderWeeklyReport(reportInfo) {
   const happy = summarizeReasons(entries, 4, 5);
   const hard = summarizeReasons(entries, 1, 2);
 
-  const reasonLabel = (k) => (REASONS_MATRIX[k] && REASONS_MATRIX[k].label) || k;
+  const reasonLabel = (k) => REASON_SHORT[k] || k;
   if (happy) {
     const names = happy.winners.map(reasonLabel).join(', ');
-    $('reportHappy').innerHTML = `<span class="accent">${escapeHtml(names)}</span> · ${happy.count}번`;
+    $('reportHappy').innerHTML = `<span class="accent">${escapeHtml(names)}</span> · ${happy.count}회`;
     $('reportHappySection').style.display = '';
   } else {
     $('reportHappySection').style.display = 'none';
   }
   if (hard) {
     const names = hard.winners.map(reasonLabel).join(', ');
-    $('reportHard').innerHTML = `<span class="accent">${escapeHtml(names)}</span> · ${hard.count}번`;
+    $('reportHard').innerHTML = `<span class="accent">${escapeHtml(names)}</span> · ${hard.count}회`;
     $('reportHardSection').style.display = '';
   } else {
     $('reportHardSection').style.display = 'none';
@@ -2977,9 +3003,9 @@ function renderWeeklyReport(reportInfo) {
   // Message — special copy for 1주차 free pass
   const msg = $('reportMessage');
   if (isFirstFree) {
-    msg.textContent = '이번엔 짧게 만났네요. 다음 주는 3번 채우면 다시 받을 수 있어요!';
+    msg.textContent = '이번엔 짧게 만났네요. 다음 주는 3회 채우면 다시 받을 수 있어요!';
   } else if (count >= 5) {
-    msg.textContent = `${count}번 채웠어요. 다음 주에도 만나요 👋`;
+    msg.textContent = `${count}회 채웠어요. 다음 주에도 만나요 👋`;
   } else if (count >= 3) {
     msg.textContent = '꾸준히 기록하고 있어요. 다음 주에도 함께해요.';
   } else {
@@ -3214,6 +3240,52 @@ function goToCheckin() {
   state.level = null;
   state.reasons = [];
   showScreen('level');
+}
+
+/* Edit existing entry: prefill level + reasons + memo, jump to reason screen, focus memo */
+function startEditEntry(entry) {
+  // Only allow editing today's entry (UI already restricts but double-check)
+  if (dateKey(entry.ts) !== dateKey(Date.now())) {
+    console.warn('[edit] not today\'s entry, abort');
+    return;
+  }
+
+  // Prefill state
+  state.level = entry.level;
+  state.reasons = (reasonsOf(entry) || []).slice(); // clone
+
+  // Render reason grid (this resets state.reasons internally — re-apply after)
+  renderReasons();
+  state.reasons = (reasonsOf(entry) || []).slice();
+
+  // Visually mark already-selected reasons
+  document.querySelectorAll('#reasons .reason').forEach(btn => {
+    if (state.reasons.includes(btn.dataset.key)) {
+      btn.classList.add('selected');
+    } else {
+      btn.classList.remove('selected');
+    }
+  });
+
+  // Restore memo text
+  const noteEl = $('note');
+  if (noteEl) noteEl.value = entry.note || '';
+
+  // Sync save button enabled state, count badge, etc.
+  if (typeof updateReasonUI === 'function') updateReasonUI();
+
+  // Switch to reason screen
+  showScreen('reason');
+
+  // After paint, scroll memo into view + focus + place cursor at end
+  setTimeout(() => {
+    if (noteEl) {
+      noteEl.focus();
+      const len = noteEl.value.length;
+      try { noteEl.setSelectionRange(len, len); } catch(_) {}
+      noteEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, 300);
 }
 
 /* ================ NEXT CHECK-IN COUNTDOWN ================ */
@@ -3653,6 +3725,11 @@ async function renderHistory() {
       const chips = rsKeys
         .map(k => `<span class="e-chip">${REASON_SHORT[k]}</span>`)
         .join('');
+      // Show edit button only for today's entry (yesterday and earlier are locked)
+      const isToday = dateKey(e.ts) === dateKey(Date.now());
+      const editBtn = isToday
+        ? `<button class="e-edit" data-id="${e.id}" aria-label="수정">✏️</button>`
+        : '';
       const row = document.createElement('div');
       row.className = 'entry';
       row.innerHTML = `
@@ -3665,7 +3742,14 @@ async function renderHistory() {
           <div class="e-chips">${chips}</div>
           ${e.note ? `<div class="e-note">${escapeHtml(e.note)}</div>` : ''}
         </div>
+        ${editBtn}
       `;
+      // Wire edit button
+      const btn = row.querySelector('.e-edit');
+      if (btn) btn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        startEditEntry(e);
+      });
       group.appendChild(row);
     });
     host.appendChild(group);
