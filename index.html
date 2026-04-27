@@ -1322,6 +1322,110 @@
   }
   .report-message:empty { display: none; }
 
+  /* ================ REPORT ARCHIVE ================ */
+  .report-archive-card {
+    text-align: left;
+    padding: 28px 22px 22px;
+    max-height: 88vh;
+    overflow-y: auto;
+  }
+  .archive-header { margin-bottom: 18px; }
+  .archive-eyebrow {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .archive-title {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 26px;
+    color: var(--ink);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  .archive-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .archive-empty {
+    text-align: center;
+    color: var(--ink-mute);
+    font-size: 13px;
+    padding: 32px 0;
+    line-height: 1.5;
+  }
+  .archive-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 14px;
+    background: white;
+    border: 1px solid #f0f0f0;
+    border-radius: 12px;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+    color: inherit;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .archive-item:hover { background: var(--bg-warm); }
+  .archive-item:active { transform: scale(0.99); }
+  .archive-item.future { opacity: 0.55; cursor: not-allowed; }
+  .archive-item.future:hover { background: white; }
+  .archive-item-main { flex: 1; min-width: 0; }
+  .archive-item-week {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+  .archive-item-date {
+    font-size: 11px;
+    color: var(--ink-mute);
+  }
+  .archive-item-stats {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .archive-stat {
+    text-align: right;
+    line-height: 1.1;
+  }
+  .archive-stat-v {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 18px;
+    color: var(--ink);
+    font-feature-settings: "tnum";
+  }
+  .archive-stat-k {
+    font-size: 9px;
+    color: var(--ink-mute);
+    margin-top: 2px;
+  }
+  .archive-arrow {
+    font-size: 18px;
+    color: var(--ink-soft);
+    flex-shrink: 0;
+    margin-left: 4px;
+  }
+  .archive-pending {
+    font-size: 11px;
+    color: var(--ink-mute);
+    font-weight: 500;
+    background: var(--bg-warm);
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+
   .mission-modal-reward {
     display: flex;
     align-items: center;
@@ -1336,6 +1440,23 @@
     background-size: 250% 100%;
     animation: rewardBreathe 2.4s ease-in-out infinite, rewardShimmer 3s linear infinite, rewardBorder 2.4s ease-in-out infinite;
     transform-origin: center;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+    color: inherit;
+  }
+  .mission-modal-reward:active {
+    transform: scale(0.98);
+  }
+  .reward-arrow {
+    font-size: 22px;
+    color: var(--ink-soft);
+    line-height: 1;
+    flex-shrink: 0;
+    margin-left: 4px;
+    position: relative;
+    z-index: 1;
   }
   @keyframes rewardBreathe {
     0%, 100% { transform: scale(1); box-shadow: 0 0 0 rgba(255,180,0,0); }
@@ -1797,13 +1918,14 @@
     <div class="mission-modal-calendar" id="missionModalCalendar">
       <!-- Day cells populated dynamically -->
     </div>
-    <div class="mission-modal-reward" id="missionModalReward">
+    <button class="mission-modal-reward" id="missionModalReward" type="button">
       <div class="reward-icon">💌</div>
       <div class="reward-info">
-        <div class="reward-title">보상 · 주간 리포트</div>
-        <div class="reward-sub">일요일에 한 주를 정리한 리포트가 도착해요</div>
+        <div class="reward-title" id="rewardTitle">보상 · 주간 리포트</div>
+        <div class="reward-sub" id="rewardSub">일요일에 한 주를 정리한 리포트가 도착해요</div>
       </div>
-    </div>
+      <div class="reward-arrow">›</div>
+    </button>
     <button class="btn modal-close" id="missionModalCloseBtn">닫기</button>
   </div>
 </div>
@@ -1813,13 +1935,9 @@
   <div class="modal-backdrop" id="missionClearBackdrop"></div>
   <div class="modal-card mission-clear-card">
     <div class="clear-burst">🎉</div>
-    <h3 class="clear-title">1주차 미션<br/>완료!</h3>
-    <p class="clear-desc">주간 리포트가 열렸어요.<br/>일요일에 한 주를 정리해서 보내드릴게요.</p>
-    <div class="clear-rewards">
-      <div class="clear-reward-item">
-        <div class="clear-reward-icon">📊</div>
-        <div class="clear-reward-text">통계 · 차트 잠금 해제</div>
-      </div>
+    <h3 class="clear-title" id="clearTitle">1주차 미션<br/>완료!</h3>
+    <p class="clear-desc" id="clearDesc">주간 리포트가 열렸어요.<br/>일요일에 한 주를 정리해서 보내드릴게요.</p>
+    <div class="clear-rewards" id="clearRewards">
       <div class="clear-reward-item">
         <div class="clear-reward-icon">💌</div>
         <div class="clear-reward-text">주간 리포트 잠금 해제</div>
@@ -1834,7 +1952,7 @@
   <div class="modal-backdrop" id="reportBackdrop"></div>
   <div class="modal-card report-card">
     <div class="report-header">
-      <div class="report-eyebrow">이번 주 리포트</div>
+      <div class="report-eyebrow" id="reportEyebrow">이번 주 리포트</div>
       <div class="report-dates" id="reportDates">4월 20일 ~ 26일</div>
     </div>
 
@@ -1870,6 +1988,21 @@
     <div class="report-message" id="reportMessage"></div>
 
     <button class="btn primary" id="reportCloseBtn">확인</button>
+  </div>
+</div>
+
+<!-- Report archive modal (지난 리포트 list) -->
+<div id="reportArchiveModal" class="modal" hidden>
+  <div class="modal-backdrop" id="reportArchiveBackdrop"></div>
+  <div class="modal-card report-archive-card">
+    <div class="archive-header">
+      <div class="archive-eyebrow">기록</div>
+      <div class="archive-title">지난 리포트</div>
+    </div>
+    <div class="archive-list" id="archiveList">
+      <!-- populated dynamically -->
+    </div>
+    <button class="btn modal-close" id="reportArchiveCloseBtn">닫기</button>
   </div>
 </div>
 
@@ -2220,12 +2353,14 @@ function setupAuth() {
     // When a user signs in (transition from null → user), pull cloud data and merge
     if (user && wasSignedOut) {
       await cloudPullAndMerge();
-      // Re-render anything that depends on entries / meta flags
+      // Re-render history + banner so they reflect any newly-merged entries.
+      // Do NOT force a screen change — the user may already be mid-flow (level / reason / result).
+      // Only auto-advance to the result screen if we are still on the initial level screen
+      // AND today has an entry.
       try { renderHistory(); } catch(_) {}
       try { renderMissionBanner(); } catch(_) {}
-      // If today already has an entry now (after merge), show result screen
       const today = getTodaysEntry();
-      if (today && state.step !== 'done') {
+      if (today && state.step === 'level') {
         try { showTodayResult(today); } catch(_) {}
       }
     }
@@ -2285,9 +2420,14 @@ function toggleUserMenu() {
         <div class="user-menu-name">${escapeHtml(name)}</div>
         <div class="user-menu-email">${escapeHtml(email)}</div>
       </div>
+      <button class="user-menu-item" id="reportArchiveBtn">지난 리포트</button>
       <button class="user-menu-item" id="notifSettingsBtn">${notifLabel}</button>
       <button class="user-menu-item" id="signOutBtn">로그아웃</button>
     `;
+    $('reportArchiveBtn').onclick = () => {
+      menu.hidden = true;
+      openReportArchive();
+    };
     $('notifSettingsBtn').onclick = () => {
       menu.hidden = true;
       openNotifModal({ fromSettings: true });
@@ -2394,6 +2534,7 @@ const CLOUD_META_KEYS = [
 // Dynamic key prefixes that should also sync (e.g. 'howru:report_seen_2026-W17')
 const CLOUD_META_PREFIXES = [
   'howru:report_seen_',
+  'howru:mission_cleared_',
 ];
 
 function isCloudMetaKey(key) {
@@ -2635,7 +2776,8 @@ function getCheckinsThisWeek() {
 }
 
 const REPORT_UNLOCKED_KEY = 'howru:reportUnlocked';
-const MISSION_W1_CLEARED_KEY = 'howru:missionW1Cleared';
+const MISSION_W1_CLEARED_KEY = 'howru:missionW1Cleared'; // legacy, kept for backward compat
+const MISSION_CLEARED_PREFIX = 'howru:mission_cleared_'; // per-week: mission_cleared_{userWeek}
 const FIRST_ENTRY_TS_KEY = 'howru:firstEntryTs';
 
 function isReportUnlocked() {
@@ -2643,10 +2785,16 @@ function isReportUnlocked() {
 }
 function unlockReport() {
   localStorage.setItem(REPORT_UNLOCKED_KEY, '1');
-  localStorage.setItem(MISSION_W1_CLEARED_KEY, '1');
+  localStorage.setItem(MISSION_W1_CLEARED_KEY, '1'); // legacy compat
 }
-function isMissionW1Cleared() {
-  return localStorage.getItem(MISSION_W1_CLEARED_KEY) === '1';
+function isMissionWeekCleared(weekNum) {
+  // Backward-compat: any prior W1 flag means W1 is cleared
+  if (weekNum === 1 && localStorage.getItem(MISSION_W1_CLEARED_KEY) === '1') return true;
+  return localStorage.getItem(MISSION_CLEARED_PREFIX + weekNum) === '1';
+}
+function markMissionWeekCleared(weekNum) {
+  localStorage.setItem(MISSION_CLEARED_PREFIX + weekNum, '1');
+  if (weekNum === 1) localStorage.setItem(MISSION_W1_CLEARED_KEY, '1'); // legacy
 }
 
 // Find the timestamp of the user's earliest entry (cached after first lookup)
@@ -2694,7 +2842,7 @@ function getWeeklyMissionState() {
   const checkins = getCheckinsThisWeek();
   const hasAnyEntry = getFirstEntryTs() !== null;
   const firstDone = hasAnyEntry;
-  const targetDone = checkins >= target || (userWeek === 1 && isMissionW1Cleared());
+  const targetDone = checkins >= target || isMissionWeekCleared(userWeek);
   return {
     userWeek,
     firstDone,
@@ -2826,6 +2974,46 @@ function openMissionModal() {
 
   cal.innerHTML = headerRow + dateRows.join('');
 
+  // Reward card — copy varies by state
+  const subEl = $('rewardSub');
+  if (subEl) {
+    if (m.targetDone) {
+      // Cleared — encourage preview
+      subEl.textContent = '미리 보러 가기 · 일요일에 다시 도착해요';
+    } else {
+      const remain = Math.max(0, m.target - m.checkinsThisWeek);
+      if (remain === 0) {
+        subEl.textContent = '미리 보러 가기 · 일요일에 도착해요';
+      } else {
+        subEl.textContent = `${remain}회 더 채우면 잠금 해제 · 미리 볼 수 있어요`;
+      }
+    }
+  }
+
+  modal.hidden = false;
+}
+
+// Open the weekly report modal in "preview" mode using current week's data
+function openReportPreview() {
+  const range = getMissionWeekRange();
+  const entries = getEntriesInRange(range.start.getTime(), range.end.getTime());
+  if (entries.length < 1) {
+    // Nothing to show yet
+    return;
+  }
+  const modal = $('reportModal');
+  if (!modal) return;
+  // Render with whatever data we have so far. weekId is set so seen-tracking
+  // doesn't accidentally suppress the real Sunday auto-report — use a preview-prefixed id.
+  renderWeeklyReport({
+    weekId: `preview-userweek-${range.weekNum}`,
+    weekStart: range.start,
+    weekEnd: range.end,
+    entries,
+    isFirstFree: false,
+    userWeek: range.weekNum,
+    isPreview: true,
+  });
   modal.hidden = false;
 }
 
@@ -2836,15 +3024,22 @@ function closeMissionModal() {
 
 /* ================ STEP 3: MISSION CLEAR CELEBRATION ================ */
 function checkMissionClearAndCelebrate() {
-  // Should we trigger? Only when:
-  // 1. Mission for current week just hit target
-  // 2. Reward not yet unlocked (so this fires once globally)
-  if (isReportUnlocked()) return false;
+  // Fire celebration once per user-week when target is hit
   const m = getWeeklyMissionState();
   if (!m.targetDone) return false;
+  // Already celebrated this specific week?
+  if (isMissionWeekCleared(m.userWeek)) {
+    // Mark as cleared (idempotent) but don't re-celebrate
+    markMissionWeekCleared(m.userWeek);
+    return false;
+  }
 
-  // Permanently mark unlocked
-  unlockReport();
+  // Mark this week as cleared (per-week flag)
+  markMissionWeekCleared(m.userWeek);
+  // Unlock report permanently on FIRST clear (W1 typically)
+  if (!isReportUnlocked()) {
+    unlockReport();
+  }
   // Show celebration after a short pause so confetti reads first
   setTimeout(() => openMissionClearModal(), 1200);
   return true;
@@ -2853,10 +3048,31 @@ function checkMissionClearAndCelebrate() {
 function openMissionClearModal() {
   const modal = $('missionClearModal');
   if (!modal) return;
-  // Update title to current week number
   const m = getWeeklyMissionState();
-  const titleEl = modal.querySelector('.clear-title');
+  const titleEl = $('clearTitle');
+  const descEl = $('clearDesc');
+  const rewardsEl = $('clearRewards');
+
   if (titleEl) titleEl.innerHTML = `${m.userWeek}주차 미션<br/>완료!`;
+
+  if (m.userWeek === 1) {
+    if (descEl) descEl.innerHTML = '주간 리포트가 열렸어요.<br/>일요일에 한 주를 정리해서 보내드릴게요.';
+    if (rewardsEl) rewardsEl.innerHTML = `
+      <div class="clear-reward-item">
+        <div class="clear-reward-icon">💌</div>
+        <div class="clear-reward-text">주간 리포트 잠금 해제</div>
+      </div>
+    `;
+  } else {
+    if (descEl) descEl.innerHTML = `${m.userWeek}주차도 ${m.target}회 채웠어요.<br/>이번 주도 일요일에 리포트가 와요.`;
+    if (rewardsEl) rewardsEl.innerHTML = `
+      <div class="clear-reward-item">
+        <div class="clear-reward-icon">💌</div>
+        <div class="clear-reward-text">${m.userWeek}주차 리포트 예정</div>
+      </div>
+    `;
+  }
+
   modal.hidden = false;
   // Extra celebration confetti
   setTimeout(() => fireMissionClearConfetti(), 200);
@@ -2865,9 +3081,20 @@ function openMissionClearModal() {
 function closeMissionClearModal() {
   const modal = $('missionClearModal');
   if (modal) modal.hidden = true;
-  // After closing, refresh the result screen so the now-unlocked stats/chart appear
-  renderMissionBanner();
-  refreshStatsAndChart();
+  // After closing, refresh the result screen so the now-unlocked stats/chart appear.
+  // Defensive: if today has an entry, force result screen (something earlier in the flow
+  // might have caused a stray screen change — this guarantees the user lands back here).
+  const today = getTodaysEntry();
+  if (today) {
+    try { showTodayResult(today); } catch(_) {
+      // fallback if showTodayResult fails — just update banner + history
+      renderMissionBanner();
+      refreshStatsAndChart();
+    }
+  } else {
+    renderMissionBanner();
+    refreshStatsAndChart();
+  }
 }
 
 function fireMissionClearConfetti() {
@@ -2900,11 +3127,10 @@ const REPORT_SEEN_PREFIX = 'howru:report_seen_';
 const REPORT_FIRSTFREE_KEY = 'howru:report_firstFreeDelivered';
 
 function getWeekId(ts = Date.now()) {
-  // ISO-style year+week id, e.g. "2026-W17"
+  // Kept only for legacy migration in case old report_seen_<ISO-week> keys exist;
+  // current weekly-report logic uses 'userweek-<n>' ids instead.
   const d = new Date(ts);
   d.setHours(0, 0, 0, 0);
-  // Move to nearest Thursday: current date + 4 - current day number
-  // Make Sunday's day number 7
   const day = d.getDay() || 7;
   d.setDate(d.getDate() + 4 - day);
   const yearStart = new Date(d.getFullYear(), 0, 1);
@@ -2919,20 +3145,32 @@ function shouldShowWeeklyReport() {
   // Window: Sunday all day, Monday all day
   if (day !== 0 && day !== 1) return false;
 
-  // Determine which week's report we'd be showing
-  // On Sunday: current calendar week
-  // On Monday: previous calendar week (last Sunday's week)
+  // Determine which week's report to show — use MISSION week so Fri/Sat/Sun signups
+  // get a single combined report covering the extended W1 (instead of a partial calendar-week one)
+  // On Sunday: report for the just-finishing/finished mission week (today inside or end == today)
+  // On Monday: report for whichever mission week ended yesterday
   let reportTs = now.getTime();
   if (day === 1) reportTs = reportTs - 24 * 60 * 60 * 1000;
 
-  const weekId = getWeekId(reportTs);
+  const range = getMissionWeekRange(reportTs);
+  const ws = range.start;
+  const we = range.end;
+  const userWeek = range.weekNum;
+
+  // Use a stable week id — userWeek number is unique per user lifecycle
+  const weekId = `userweek-${userWeek}`;
 
   // Already seen?
   if (localStorage.getItem(REPORT_SEEN_PREFIX + weekId) === '1') return false;
 
+  // Make sure this mission week has actually ended (its last day is today or earlier)
+  // On Sunday, range.end might be today (W1 extends 13 days for Fri/Sat/Sun signups)
+  // We only show the report when the week is OVER, not partway through
+  const todayEndOfDay = new Date(now);
+  todayEndOfDay.setHours(23, 59, 59, 999);
+  if (we.getTime() > todayEndOfDay.getTime()) return false;
+
   // Did the user have at least one entry in that week?
-  const ws = getWeekStart(reportTs);
-  const we = getWeekEnd(reportTs);
   const entries = getEntriesInRange(ws.getTime(), we.getTime());
   if (entries.length < 1) return false;
 
@@ -2941,7 +3179,7 @@ function shouldShowWeeklyReport() {
   const firstFreeUsed = localStorage.getItem(REPORT_FIRSTFREE_KEY) === '1';
   if (!rewardUnlocked && firstFreeUsed) return false;
 
-  return { weekId, weekStart: ws, weekEnd: we, entries, isFirstFree: !rewardUnlocked && !firstFreeUsed };
+  return { weekId, weekStart: ws, weekEnd: we, entries, isFirstFree: !rewardUnlocked && !firstFreeUsed, userWeek };
 }
 
 function getEntriesInRange(startMs, endMs) {
@@ -2975,7 +3213,15 @@ function summarizeReasons(entries, levelMin, levelMax) {
 }
 
 function renderWeeklyReport(reportInfo) {
-  const { weekId, weekStart, weekEnd, entries, isFirstFree } = reportInfo;
+  const { weekId, weekStart, weekEnd, entries, isFirstFree, userWeek, isPreview } = reportInfo;
+
+  // Eyebrow: "1주차 리포트" / "2주차 리포트" ... (preview adds "· 미리보기")
+  const eyebrowEl = $('reportEyebrow');
+  if (eyebrowEl && userWeek) {
+    eyebrowEl.textContent = isPreview
+      ? `${userWeek}주차 리포트 · 미리보기`
+      : `${userWeek}주차 리포트`;
+  }
 
   // Dates
   const fmt = d => `${d.getMonth()+1}월 ${d.getDate()}일`;
@@ -3009,10 +3255,14 @@ function renderWeeklyReport(reportInfo) {
     $('reportHardSection').style.display = 'none';
   }
 
-  // Message — special copy for 1주차 free pass
+  // Message — preview vs real, with appropriate copy for state
   const msg = $('reportMessage');
-  if (isFirstFree) {
-    msg.textContent = '이번엔 짧게 만났네요. 다음 주는 3회 채우면 다시 받을 수 있어요!';
+  const nextTarget = getMissionTargetForWeek((userWeek || 1) + 1);
+  if (isPreview) {
+    const fmtD = d => `${d.getMonth()+1}월 ${d.getDate()}일`;
+    msg.textContent = `미리보기예요. 정식 리포트는 ${fmtD(weekEnd)}(일) 이후 받을 수 있어요.`;
+  } else if (isFirstFree) {
+    msg.textContent = `이번엔 짧게 만났네요. 다음 주는 ${nextTarget}회 채우면 다시 받을 수 있어요!`;
   } else if (count >= 5) {
     msg.textContent = `${count}회 채웠어요. 다음 주에도 만나요 👋`;
   } else if (count >= 3) {
@@ -3021,10 +3271,12 @@ function renderWeeklyReport(reportInfo) {
     msg.textContent = '';
   }
 
-  // Mark seen + first-free used
-  localStorage.setItem(REPORT_SEEN_PREFIX + weekId, '1');
-  if (isFirstFree) {
-    localStorage.setItem(REPORT_FIRSTFREE_KEY, '1');
+  // Mark seen + first-free used (skip in preview mode so the real Sunday report still triggers)
+  if (!isPreview) {
+    localStorage.setItem(REPORT_SEEN_PREFIX + weekId, '1');
+    if (isFirstFree) {
+      localStorage.setItem(REPORT_FIRSTFREE_KEY, '1');
+    }
   }
 
   // Chart
@@ -3034,11 +3286,14 @@ function renderWeeklyReport(reportInfo) {
 function drawReportChart(entries, weekStart, weekEnd) {
   const canvas = $('reportChart');
   if (!canvas || typeof Chart === 'undefined') return;
-  // Bucket entries by day-of-week (Mon=0..Sun=6)
+  // Build day-by-day series — handles variable week lengths (W1 may be 8-13 days for late-week signups)
   const points = [];
-  const labels = ['월','화','수','목','금','토','일'];
+  const labels = [];
+  const dayNames = ['일','월','화','수','목','금','토']; // getDay() index
   const oneDay = 24 * 60 * 60 * 1000;
   for (let t = weekStart.getTime(); t <= weekEnd.getTime(); t += oneDay) {
+    const d = new Date(t);
+    labels.push(dayNames[d.getDay()]);
     const key = dateKey(t);
     const entry = entries.find(e => dateKey(e.ts) === key);
     points.push(entry ? entry.level : null);
@@ -3095,6 +3350,127 @@ function openReportIfDue() {
 
 function closeReportModal() {
   const modal = $('reportModal');
+  if (modal) modal.hidden = true;
+}
+
+/* ================ REPORT ARCHIVE ================ */
+// Enumerate all user-weeks from signup to now.
+// Returns: [{ weekNum, start, end, entries, isCurrent, isFuture }, ...] newest first.
+function listAllUserWeeks() {
+  const firstTs = getFirstEntryTs();
+  if (!firstTs) return [];
+
+  const weeks = [];
+  // Iterate by sampling 1 day at a time from signup → today, jump to next week boundary
+  const todayMs = Date.now();
+  let cursor = firstTs;
+  let safety = 0;
+  while (cursor <= todayMs && safety < 200) {
+    const range = getMissionWeekRange(cursor);
+    weeks.push({
+      weekNum: range.weekNum,
+      start: range.start,
+      end: range.end,
+    });
+    // Move cursor to day after this range ends
+    cursor = range.end.getTime() + 1;
+    safety++;
+  }
+
+  // Annotate with stats + status
+  const todayEnd = new Date();
+  todayEnd.setHours(23, 59, 59, 999);
+
+  return weeks.map(w => {
+    const entries = getEntriesInRange(w.start.getTime(), w.end.getTime());
+    const isCurrent = todayMs >= w.start.getTime() && todayMs <= w.end.getTime();
+    const avg = entries.length > 0
+      ? entries.reduce((s, e) => s + e.level, 0) / entries.length
+      : 0;
+    return {
+      ...w,
+      entries,
+      count: entries.length,
+      avg,
+      isCurrent,
+    };
+  }).reverse(); // newest first
+}
+
+function openReportArchive() {
+  const modal = $('reportArchiveModal');
+  const list = $('archiveList');
+  if (!modal || !list) return;
+
+  const weeks = listAllUserWeeks();
+  if (weeks.length === 0) {
+    list.innerHTML = '<div class="archive-empty">아직 기록이 없어요.<br/>첫 체크인부터 시작해보세요.</div>';
+  } else {
+    const fmt = d => `${d.getMonth()+1}월 ${d.getDate()}일`;
+    list.innerHTML = weeks.map(w => {
+      const dateStr = `${fmt(w.start)} ~ ${fmt(w.end)}`;
+      if (w.count === 0 && !w.isCurrent) {
+        // Past week with no entries — show grayed out
+        return `
+          <div class="archive-item future">
+            <div class="archive-item-main">
+              <div class="archive-item-week">${w.weekNum}주차 리포트</div>
+              <div class="archive-item-date">${dateStr}</div>
+            </div>
+            <div class="archive-pending">기록 없음</div>
+          </div>
+        `;
+      }
+      const previewLabel = w.isCurrent ? '진행 중' : '';
+      return `
+        <button class="archive-item" data-week-num="${w.weekNum}">
+          <div class="archive-item-main">
+            <div class="archive-item-week">${w.weekNum}주차 리포트${previewLabel ? ' · ' + previewLabel : ''}</div>
+            <div class="archive-item-date">${dateStr}</div>
+          </div>
+          <div class="archive-item-stats">
+            <div class="archive-stat">
+              <div class="archive-stat-v">${w.avg.toFixed(1)}</div>
+              <div class="archive-stat-k">평균</div>
+            </div>
+            <div class="archive-stat">
+              <div class="archive-stat-v">${w.count}</div>
+              <div class="archive-stat-k">기록</div>
+            </div>
+          </div>
+          <div class="archive-arrow">›</div>
+        </button>
+      `;
+    }).join('');
+
+    // Wire item clicks
+    list.querySelectorAll('.archive-item[data-week-num]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const weekNum = parseInt(btn.dataset.weekNum, 10);
+        const target = weeks.find(w => w.weekNum === weekNum);
+        if (!target) return;
+        closeReportArchive();
+        setTimeout(() => {
+          renderWeeklyReport({
+            weekId: `archive-userweek-${target.weekNum}`,
+            weekStart: target.start,
+            weekEnd: target.end,
+            entries: target.entries,
+            isFirstFree: false,
+            userWeek: target.weekNum,
+            isPreview: target.isCurrent, // current week shows as preview, past as full report
+          });
+          $('reportModal').hidden = false;
+        }, 200);
+      });
+    });
+  }
+
+  modal.hidden = false;
+}
+
+function closeReportArchive() {
+  const modal = $('reportArchiveModal');
   if (modal) modal.hidden = true;
 }
 
@@ -3777,7 +4153,15 @@ function initApp() {
     showScreen('level');
   });
   if (saveBtn) saveBtn.addEventListener('click', save);
-  if (againBtn) againBtn.addEventListener('click', goToCheckin);
+  if (againBtn) againBtn.addEventListener('click', () => {
+    // "오늘 기록 수정" — true edit if today already has an entry
+    const today = getTodaysEntry();
+    if (today) {
+      startEditEntry(today);
+    } else {
+      goToCheckin();
+    }
+  });
 
   // User profile button + dropdown
   const userBtn = $('userBtn');
@@ -3843,6 +4227,23 @@ function initApp() {
   if (missionClose) missionClose.addEventListener('click', closeMissionModal);
   if (missionBackdrop) missionBackdrop.addEventListener('click', closeMissionModal);
 
+  // Reward card → open report preview using current week's data
+  const rewardCard = $('missionModalReward');
+  if (rewardCard) rewardCard.addEventListener('click', () => {
+    const range = getMissionWeekRange();
+    const entries = getEntriesInRange(range.start.getTime(), range.end.getTime());
+    if (entries.length === 0) {
+      // Soft toast — just shake the card a bit so user knows nothing yet
+      rewardCard.animate(
+        [{ transform: 'translateX(-4px)' }, { transform: 'translateX(4px)' }, { transform: 'translateX(0)' }],
+        { duration: 240, iterations: 2 }
+      );
+      return;
+    }
+    closeMissionModal();
+    setTimeout(() => openReportPreview(), 200);
+  });
+
   // Mission clear celebration handlers
   const clearOk = $('missionClearOkBtn');
   const clearBackdrop = $('missionClearBackdrop');
@@ -3854,6 +4255,12 @@ function initApp() {
   const reportBackdrop = $('reportBackdrop');
   if (reportClose) reportClose.addEventListener('click', closeReportModal);
   if (reportBackdrop) reportBackdrop.addEventListener('click', closeReportModal);
+
+  // Report archive handlers
+  const archiveClose = $('reportArchiveCloseBtn');
+  const archiveBackdrop = $('reportArchiveBackdrop');
+  if (archiveClose) archiveClose.addEventListener('click', closeReportArchive);
+  if (archiveBackdrop) archiveBackdrop.addEventListener('click', closeReportArchive);
 
   // If today already has an entry, skip check-in and show the journal
   const today = getTodaysEntry();
