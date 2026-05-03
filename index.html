@@ -2117,8 +2117,17 @@ window.fb = {
         console.warn('[fcm] this browser does not support messaging');
         return null;
       }
-      // Register the service worker first (browser may already have it)
-      const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+
+      // 1) Register the service worker (no-op if already registered)
+      await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+
+      // 2) Wait until the SW is fully ready and active.
+      //    `register()` resolves on registration, but PushManager.subscribe()
+      //    requires the SW to be in 'active' state — `ready` waits for that.
+      const swReg = await navigator.serviceWorker.ready;
+      console.log('[fcm] SW ready, scope:', swReg.scope, 'active:', !!swReg.active);
+
+      // 3) Now safely request the FCM token using the activated registration
       const messaging = getMessaging(app);
       const token = await getToken(messaging, {
         vapidKey: FCM_VAPID_KEY,
