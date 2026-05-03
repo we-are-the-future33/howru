@@ -33,4 +33,4 @@ jobs:
           args: deploy --only functions --force
         env:
           GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          PROJ
+          PROJECT_ID: howru-app
