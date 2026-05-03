@@ -1,8 +1,0 @@
-node_modules/
-*.log
-.DS_Store
-.env
-.env.local
-.firebase/
-firebase-debug.log
-firebase-debug.*.log
