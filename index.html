@@ -908,6 +908,26 @@
     box-shadow: var(--shadow);
   }
 
+  /* iOS install hint inside notif modal */
+  .ios-hint {
+    text-align: left;
+    background: #fff8e1;
+    border: 1px solid #ffe89a;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    color: #6b5300;
+    line-height: 1.6;
+  }
+  .ios-hint b {
+    color: #1a1a1a;
+  }
+  .ios-hint .step {
+    display: block;
+    margin-top: 4px;
+  }
+
   /* ================ MISSION BANNER ================ */
   /* ================ MISSION TOOLTIP ================ */
   .mission-banner-wrap {
@@ -1892,8 +1912,9 @@
   <div class="modal-backdrop" id="notifBackdrop"></div>
   <div class="modal-card">
     <div class="notif-icon">🔔</div>
-    <h3 class="modal-title">매일 같은 시간에<br/>알려드릴까요?</h3>
-    <p class="modal-desc">기록을 잊지 않게 부드럽게 챙겨드려요.<br/>몇 시가 좋아요?</p>
+    <h3 class="modal-title" id="notifTitle">매일 같은 시간에<br/>알려드릴까요?</h3>
+    <p class="modal-desc" id="notifDesc">기록을 잊지 않게 부드럽게 챙겨드려요.<br/>몇 시가 좋아요?</p>
+    <div class="ios-hint" id="iosHint" hidden></div>
     <div class="time-options" id="timeOptions">
       <button class="time-btn" data-hour="20">저녁 8시</button>
       <button class="time-btn" data-hour="21">9시</button>
@@ -2006,7 +2027,7 @@
   </div>
 </div>
 
-<!-- Firebase Auth + Firestore module (loads asynchronously, exposes to window.fb) -->
+<!-- Firebase Auth + Firestore + Messaging module (loads asynchronously, exposes to window.fb) -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
@@ -2017,6 +2038,9 @@ import {
   getFirestore, doc, setDoc, getDoc, deleteDoc,
   collection, getDocs, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getMessaging, getToken, onMessage, isSupported as isMessagingSupported
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC-XivAxixT0h_iFEJk8iwBCPuiFX3GcJM",
@@ -2033,6 +2057,9 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 const db = getFirestore(app);
 
+// FCM Web Push VAPID public key (from Firebase Console → Cloud Messaging)
+const FCM_VAPID_KEY = 'BFFgW5Aov_DrjQuznyiBc9STXQK3Im1lz6XW4WYl899fPhihwAzdD1_xc_xtdw1Xm1pXTyMt96_zxeIgzeHVMsM';
+
 // Expose Firebase API to the rest of the (non-module) code
 window.fb = {
   auth,
@@ -2042,7 +2069,7 @@ window.fb = {
   getUser: () => auth.currentUser,
 
   // ---- Firestore: per-user data ----
-  // Path: users/{uid}/entries/{dateKey}, users/{uid}/meta/state
+  // Path: users/{uid}/entries/{dateKey}, users/{uid}/meta/state, users/{uid}/fcmTokens/{token}
 
   fsSaveEntry: async (uid, dateKey, entry) => {
     const ref = doc(db, 'users', uid, 'entries', dateKey);
@@ -2079,6 +2106,55 @@ window.fb = {
       batch.set(doc(db, 'users', uid, 'entries', k), entriesByKey[k], { merge: true });
     });
     await batch.commit();
+  },
+
+  // ---- FCM (Firebase Cloud Messaging) ----
+  // Get FCM token for this device. Returns null if not supported / permission denied.
+  getFcmToken: async () => {
+    try {
+      const supported = await isMessagingSupported();
+      if (!supported) {
+        console.warn('[fcm] this browser does not support messaging');
+        return null;
+      }
+      // Register the service worker first (browser may already have it)
+      const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+      const messaging = getMessaging(app);
+      const token = await getToken(messaging, {
+        vapidKey: FCM_VAPID_KEY,
+        serviceWorkerRegistration: swReg,
+      });
+      return token || null;
+    } catch (e) {
+      console.error('[fcm] getToken failed:', e);
+      return null;
+    }
+  },
+
+  // Save token to Firestore: users/{uid}/fcmTokens/{token}
+  fsSaveFcmToken: async (uid, token, meta = {}) => {
+    if (!uid || !token) return;
+    const ref = doc(db, 'users', uid, 'fcmTokens', token);
+    await setDoc(ref, {
+      token,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      ...meta,
+    }, { merge: true });
+  },
+
+  // Set up foreground message listener (when app is open)
+  setupForegroundMessageHandler: async (callback) => {
+    try {
+      const supported = await isMessagingSupported();
+      if (!supported) return;
+      const messaging = getMessaging(app);
+      onMessage(messaging, callback);
+    } catch (e) {
+      console.warn('[fcm] foreground handler setup failed:', e);
+    }
   },
 };
 
@@ -2363,6 +2439,15 @@ function setupAuth() {
       if (today && state.step === 'level') {
         try { showTodayResult(today); } catch(_) {}
       }
+      // Set up foreground FCM message handler — show in-app toast when push arrives while app is open
+      try {
+        if (window.fb.setupForegroundMessageHandler) {
+          window.fb.setupForegroundMessageHandler((payload) => {
+            console.log('[fcm] foreground message:', payload);
+            // For Phase A we just log it. UI toast can be added later.
+          });
+        }
+      } catch(_) {}
     }
   });
 }
@@ -3775,9 +3860,15 @@ function openNotifModal(opts = {}) {
   if (!m) return;
   notifModalContext = opts.fromSettings ? 'settings' : 'firstTime';
 
+  // Reset iOS hint visibility (will be shown by selectNotifTime if needed)
+  const hint = $('iosHint');
+  if (hint) { hint.hidden = true; hint.innerHTML = ''; }
+  const timeOpts = $('timeOptions');
+  if (timeOpts) timeOpts.style.display = '';
+
   // Update title/desc based on context
-  const title = m.querySelector('.modal-title');
-  const desc = m.querySelector('.modal-desc');
+  const title = $('notifTitle');
+  const desc = $('notifDesc');
   if (notifModalContext === 'settings') {
     title.innerHTML = '알림 설정';
     desc.textContent = '받고 싶은 시간을 선택하세요.';
@@ -3822,11 +3913,41 @@ function disableNotif() {
   closeNotifModal();
 }
 
+// iOS Safari (홈 화면에 추가하지 않은 경우) 안내 패널
+function showIOSInstallHint() {
+  const hint = $('iosHint');
+  const desc = $('notifDesc');
+  const title = $('notifTitle');
+  const timeOpts = $('timeOptions');
+  if (title) title.innerHTML = '한 단계만 더!';
+  if (desc) desc.innerHTML = '시간은 저장됐어요. iPhone에서 알림을 받으려면<br/>먼저 <b>홈 화면에 추가</b>해야 해요.';
+  if (hint) {
+    hint.innerHTML =
+      '<span class="step">①&nbsp;사파리 하단 <b>공유 버튼</b> 탭</span>' +
+      '<span class="step">②&nbsp;<b>홈 화면에 추가</b> 선택</span>' +
+      '<span class="step">③&nbsp;홈에서 howru 다시 열기</span>' +
+      '<span class="step">④&nbsp;알림 시간 다시 선택</span>';
+    hint.hidden = false;
+  }
+  if (timeOpts) timeOpts.style.display = 'none';
+}
+
 async function selectNotifTime(hour) {
   // Mark UI selection visually
   document.querySelectorAll('.time-btn').forEach(b => {
     b.classList.toggle('selected', b.dataset.hour == String(hour));
   });
+
+  // iOS Safari standalone PWA check — 홈 화면에 추가하지 않은 iOS에서는 푸시 불가
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                       || window.navigator.standalone === true;
+  if (isIOS && !isStandalone) {
+    // 시간은 저장하지만 푸시 등록은 못 한다고 알려줌
+    localStorage.setItem(NOTIF_TIME_KEY, String(hour));
+    showIOSInstallHint();
+    return;
+  }
 
   // Request browser notification permission
   let permission = Notification.permission;
@@ -3836,15 +3957,37 @@ async function selectNotifTime(hour) {
     } catch (e) { permission = 'denied'; }
   }
 
-  if (permission === 'granted') {
-    // Save preference (actual scheduled push will be wired in Phase 2)
-    localStorage.setItem(NOTIF_TIME_KEY, String(hour));
-    // Brief visual confirmation, then close
-    setTimeout(() => closeNotifModal(), 500);
-  } else {
-    // Permission denied — close anyway, user made a choice
+  if (permission !== 'granted') {
     setTimeout(() => closeNotifModal(), 300);
+    return;
   }
+
+  // Save time preference
+  localStorage.setItem(NOTIF_TIME_KEY, String(hour));
+
+  // Get FCM token + save to Firestore (best-effort, don't block UI)
+  if (state.user && !TEST_MODE && window.fb && window.fb.getFcmToken) {
+    try {
+      const token = await window.fb.getFcmToken();
+      if (token) {
+        // Convert KST hour → UTC hour for server-side scheduling
+        // (서버는 UTC로 cron 돌리기 때문에 미리 변환해서 저장)
+        const utcHour = (hour - 9 + 24) % 24;
+        await window.fb.fsSaveFcmToken(state.user.uid, token, {
+          notifHour: hour,
+          notifHourUtc: utcHour,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Seoul',
+        });
+        console.log('[fcm] token saved to Firestore:', token.slice(0, 20) + '...');
+      } else {
+        console.warn('[fcm] no token returned (browser unsupported or denied)');
+      }
+    } catch (e) {
+      console.error('[fcm] token save failed:', e);
+    }
+  }
+
+  setTimeout(() => closeNotifModal(), 500);
 }
 
 async function save() {
