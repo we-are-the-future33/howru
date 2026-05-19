@@ -8,6 +8,7 @@
   "theme_color": "#fafafa",
   "orientation": "portrait",
   "lang": "ko",
+  "gcm_sender_id": "128308942213",
   "icons": [
     {
       "src": "/icon-192.png",
