@@ -4,7 +4,7 @@
  * 매시간 정각에 실행되어 fcmTokens 컬렉션에서
  * 현재 UTC 시각과 일치하는 토큰들을 찾아 푸시 발송합니다.
  *
- * Last deploy: 2026-05-19 — added gcm_sender_id to manifest, triggering redeploy
+ * Last deploy: 2026-05-19 (retry) — IAM permissions added, retry deploy
  */
 
 const { onSchedule } = require('firebase-functions/v2/scheduler');
