@@ -32,5 +32,5 @@ jobs:
         with:
           args: deploy --only functions --force
         env:
-          GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT2 }}
           PROJECT_ID: howru-app
