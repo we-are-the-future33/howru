@@ -19,6 +19,7 @@ const { getMessaging } = require('firebase-admin/messaging');
 const { getAuth } = require('firebase-admin/auth');
 const { google } = require('googleapis');
 const logger = require('firebase-functions/logger');
+const crypto = require('crypto');
 const { buildRow, upsertRow } = require('./sheet-sync');
 
 initializeApp();
@@ -38,8 +39,10 @@ const SHEET_CONFIG = {
   spreadsheetId: '1H4s89-dY9RLVHYCKcqMzFE2r4zlxgJ8g8r9UhdgaN5Y', // 생활_허브
   sheetName: '_howru',
 };
-// 이 이메일로 로그인한 계정의 체크인만 시트로 보냅니다.
-const ALLOWED_EMAILS = ['caramelsuit@gmail.com'];
+// 허용한 계정의 체크인만 시트로 보냅니다. 이 repo는 공개라서 이메일 대신
+// 소문자 이메일의 SHA-256 해시를 둡니다. 계정을 바꾸려면 새 해시로 교체하세요.
+const ALLOWED_EMAIL_HASHES = ['6327cec730e86aa188bd41fff2e3ac3b45c619dc35524c4f59bda284461efa83'];
+const emailHash = (s) => crypto.createHash('sha256').update(String(s).trim().toLowerCase()).digest('hex');
 
 exports.syncEntryToSheet = onDocumentWritten(
   { document: 'users/{uid}/entries/{dateKey}', region: 'asia-northeast3' },
@@ -53,8 +56,9 @@ exports.syncEntryToSheet = onDocumentWritten(
       logger.warn(`[sheet] cannot look up user uid=${uid}: ${e.message}`);
       return;
     }
-    if (!ALLOWED_EMAILS.includes(email)) {
-      logger.info(`[sheet] skip: ${email || 'no email'} is not in ALLOWED_EMAILS`);
+    if (!email || !ALLOWED_EMAIL_HASHES.includes(emailHash(email))) {
+      // Cloud Logging은 프로젝트 소유자만 볼 수 있으므로 여기에는 이메일을 남겨도 됩니다.
+      logger.info(`[sheet] skip: ${email || 'no email'} is not allowed`);
       return;
     }
 

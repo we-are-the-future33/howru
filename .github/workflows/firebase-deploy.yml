@@ -27,10 +27,29 @@ jobs:
         run: npm install
         working-directory: functions
 
+      # 서비스 계정 키는 JSON 원문이든 base64든 모두 받습니다.
+      # 실패하면 오류 줄을 Actions 주석(annotation)으로 남깁니다. 키는 출력하지 않습니다.
       - name: Deploy to Firebase
-        uses: w9jds/firebase-action@v14.10.1
-        with:
-          args: deploy --only functions --force
         env:
-          GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT2 }}
-          PROJECT_ID: howru-app
+          SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT2 }}
+        run: |
+          set +e
+          KEY_FILE="$RUNNER_TEMP/sa.json"
+          if printf '%s' "$SA_KEY" | head -c 1 | grep -q '{'; then
+            printf '%s' "$SA_KEY" > "$KEY_FILE"
+          else
+            printf '%s' "$SA_KEY" | base64 -d > "$KEY_FILE" 2>/dev/null
+          fi
+          if ! node -e "const k=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'));if(!k.client_email||!k.private_key)process.exit(1)" "$KEY_FILE"; then
+            echo "::error::FIREBASE_SERVICE_ACCOUNT2 secret is not a valid service account JSON (raw or base64)"
+            exit 1
+          fi
+          export GOOGLE_APPLICATION_CREDENTIALS="$KEY_FILE"
+          npx --yes firebase-tools@14.10.1 deploy --only functions --project howru-app --force --non-interactive 2>&1 | tee "$RUNNER_TEMP/deploy.log"
+          code=${PIPESTATUS[0]}
+          if [ "$code" != "0" ]; then
+            grep -iE "error|denied|permission|not enabled|failed|forbidden|invalid|403|400" "$RUNNER_TEMP/deploy.log" | head -15 | while IFS= read -r line; do
+              echo "::error::${line:0:500}"
+            done
+            exit "$code"
+          fi
