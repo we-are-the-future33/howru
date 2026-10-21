@@ -51,6 +51,15 @@ jobs:
           gcloud services enable sheets.googleapis.com --project howru-app --quiet 2>&1 | tail -3 \
             || echo "::warning::Could not enable sheets.googleapis.com from CI. Enable it manually in the Cloud console."
 
+      # 이전 배포가 중간에 실패해 반쯤 만들어진 syncEntryToSheet가 있으면 firebase-tools가 죽습니다. 정상(ACTIVE)이 아니면 지우고 새로 만듭니다.
+      - name: Clean up broken syncEntryToSheet
+        run: |
+          STATE=$(gcloud functions describe syncEntryToSheet --gen2 --region asia-northeast3 --project howru-app --format='value(state)' 2>&1 | tail -1)
+          echo "syncEntryToSheet state: $STATE"
+          if [ -n "$STATE" ] && [ "$STATE" != "ACTIVE" ] && ! echo "$STATE" | grep -qi "not found\|ERROR"; then
+            gcloud functions delete syncEntryToSheet --gen2 --region asia-northeast3 --project howru-app --quiet 2>&1 | tail -3
+          fi
+
       # 실패하면 로그 마지막 60줄을 Actions 주석(annotation)으로 남깁니다.
       - name: Deploy to Firebase
         run: |
