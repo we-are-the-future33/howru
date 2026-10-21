@@ -21,19 +21,17 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install function dependencies
         run: npm install
         working-directory: functions
 
-      # 서비스 계정 키는 JSON 원문이든 base64든 모두 받습니다.
-      # 실패하면 오류 줄을 Actions 주석(annotation)으로 남깁니다. 키는 출력하지 않습니다.
-      - name: Deploy to Firebase
+      # 서비스 계정 키는 JSON 원문이든 base64든 모두 받습니다. 키는 출력하지 않습니다.
+      - name: Prepare credentials
         env:
           SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT2 }}
         run: |
-          set +e
           KEY_FILE="$RUNNER_TEMP/sa.json"
           if printf '%s' "$SA_KEY" | head -c 1 | grep -q '{'; then
             printf '%s' "$SA_KEY" > "$KEY_FILE"
@@ -44,11 +42,22 @@ jobs:
             echo "::error::FIREBASE_SERVICE_ACCOUNT2 secret is not a valid service account JSON (raw or base64)"
             exit 1
           fi
-          export GOOGLE_APPLICATION_CREDENTIALS="$KEY_FILE"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$KEY_FILE" >> "$GITHUB_ENV"
+
+      # 시트 연동 함수가 Google Sheets API를 쓰므로 프로젝트에서 켜져 있어야 합니다. 이미 켜져 있으면 아무 일도 없습니다.
+      - name: Enable Google Sheets API
+        run: |
+          gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS" --quiet 2>&1 | tail -1
+          gcloud services enable sheets.googleapis.com --project howru-app --quiet 2>&1 | tail -3 \
+            || echo "::warning::Could not enable sheets.googleapis.com from CI. Enable it manually in the Cloud console."
+
+      # 실패하면 로그 마지막 60줄을 Actions 주석(annotation)으로 남깁니다.
+      - name: Deploy to Firebase
+        run: |
+          set +e
           npx --yes firebase-tools@14.10.1 deploy --only functions --project howru-app --force --non-interactive 2>&1 | tee "$RUNNER_TEMP/deploy.log"
           code=${PIPESTATUS[0]}
           if [ "$code" != "0" ]; then
-            # 마지막 60줄(색상 코드 제거)을 한 개의 주석으로 남깁니다.
             TAIL=$(tail -n 60 "$RUNNER_TEMP/deploy.log" | sed 's/\x1b\[[0-9;]*m//g' | cut -c1-300)
             TAIL="${TAIL//'%'/'%25'}"
             TAIL="${TAIL//$'\r'/}"
