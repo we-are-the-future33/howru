@@ -48,8 +48,11 @@ jobs:
           npx --yes firebase-tools@14.10.1 deploy --only functions --project howru-app --force --non-interactive 2>&1 | tee "$RUNNER_TEMP/deploy.log"
           code=${PIPESTATUS[0]}
           if [ "$code" != "0" ]; then
-            grep -iE "error|denied|permission|not enabled|failed|forbidden|invalid|403|400" "$RUNNER_TEMP/deploy.log" | head -15 | while IFS= read -r line; do
-              echo "::error::${line:0:500}"
-            done
+            # 마지막 60줄(색상 코드 제거)을 한 개의 주석으로 남깁니다.
+            TAIL=$(tail -n 60 "$RUNNER_TEMP/deploy.log" | sed 's/\x1b\[[0-9;]*m//g' | cut -c1-300)
+            TAIL="${TAIL//'%'/'%25'}"
+            TAIL="${TAIL//$'\r'/}"
+            TAIL="${TAIL//$'\n'/'%0A'}"
+            echo "::error title=firebase deploy log::${TAIL}"
             exit "$code"
           fi
