@@ -55,10 +55,10 @@ jobs:
       - name: Deploy to Firebase
         run: |
           set +e
-          npx --yes firebase-tools@14.10.1 deploy --only functions --project howru-app --force --non-interactive 2>&1 | tee "$RUNNER_TEMP/deploy.log"
+          npx --yes firebase-tools@14.10.1 deploy --only functions --project howru-app --force --non-interactive --debug 2>&1 | tee "$RUNNER_TEMP/deploy.log"
           code=${PIPESTATUS[0]}
           if [ "$code" != "0" ]; then
-            TAIL=$(tail -n 60 "$RUNNER_TEMP/deploy.log" | sed 's/\x1b\[[0-9;]*m//g' | cut -c1-300)
+            TAIL=$(grep -iE "error|fail|denied|permission|403|400|409|quota|HTTP" "$RUNNER_TEMP/deploy.log" | grep -v "npm warn" | tail -n 25 | sed 's/\x1b\[[0-9;]*m//g' | cut -c1-300)
             TAIL="${TAIL//'%'/'%25'}"
             TAIL="${TAIL//$'\r'/}"
             TAIL="${TAIL//$'\n'/'%0A'}"
