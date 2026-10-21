@@ -1,13 +1,14 @@
 {
   "name": "functions",
-  "description": "howru Cloud Functions — daily push notifications",
+  "description": "howru Cloud Functions — daily push notifications and sheet sync",
   "main": "index.js",
   "engines": {
     "node": "20"
   },
   "dependencies": {
     "firebase-admin": "^12.7.0",
-    "firebase-functions": "^6.1.0"
+    "firebase-functions": "^6.1.0",
+    "googleapis": "^140.0.0"
   },
   "private": true
 }
