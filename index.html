@@ -390,6 +390,13 @@
   textarea.note::placeholder {
     color: var(--ink-mute);
   }
+  .current-level.editable { cursor: pointer; }
+  .current-level .badge-change {
+    margin-left: 8px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-mute);
+  }
   .body-wrap { padding: 4px 20px 8px; }
   .body-title {
     margin: 0 4px 8px;
@@ -3771,7 +3778,10 @@ function renderReasons() {
   host.innerHTML = '';
   const lv = LEVELS.find(l => l.n === state.level);
   const badge = $('currentLevelBadge');
-  badge.innerHTML = `<span class="dot"></span><span>${lv.k}</span>`;
+  const editingToday = !!getTodaysEntry();
+  badge.classList.toggle('editable', editingToday);
+  badge.innerHTML = `<span class="dot"></span><span>${lv.k}</span>` +
+    (editingToday ? '<span class="badge-change">기분 바꾸기</span>' : '');
   badge.style.setProperty('--level-color', LEVEL_HEX[lv.n]);
 
   const q = $('reasonQuestion');
@@ -4554,6 +4564,20 @@ function initApp() {
   const saveBtn = $('saveBtn');
   const againBtn = $('againBtn');
   if (backBtn) backBtn.addEventListener('click', () => {
+    // Editing today's saved entry: ← goes back to today's result (discard unsaved edits).
+    // First check-in of the day: ← goes back to the mood screen as before.
+    const today = getTodaysEntry();
+    if (today) {
+      showTodayResult(today);
+    } else {
+      state.reasons = [];
+      showScreen('level');
+    }
+  });
+  // While editing, tapping the mood badge is how you change the mood level.
+  const levelBadge = $('currentLevelBadge');
+  if (levelBadge) levelBadge.addEventListener('click', () => {
+    if (!levelBadge.classList.contains('editable')) return;
     state.reasons = [];
     showScreen('level');
   });
