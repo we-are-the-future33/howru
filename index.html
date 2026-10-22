@@ -390,6 +390,46 @@
   textarea.note::placeholder {
     color: var(--ink-mute);
   }
+  .body-wrap { padding: 4px 20px 8px; }
+  .body-title {
+    margin: 0 4px 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-soft);
+  }
+  .body-title span {
+    margin-left: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-mute);
+  }
+  /* 3 + 2 layout: good side on the first row, bad side on the second */
+  .body-options {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+  }
+  .body-opt:nth-child(-n+3) { grid-column: span 2; }
+  .body-opt:nth-child(n+4) { grid-column: span 3; }
+  .body-opt {
+    text-align: center;
+    padding: 10px 8px;
+    border: none;
+    border-radius: 999px;
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, transform 0.1s;
+  }
+  .body-opt:active { transform: scale(0.95); }
+  .body-opt.selected {
+    background: var(--ink);
+    color: #fff;
+  }
   .note-label {
     display: block;
     margin: 4px 4px 6px;
@@ -712,6 +752,10 @@
     line-height: 1.3;
   }
   /* Note spans the full card width (below face/meta/chips), not the narrow text column */
+  .entry .e-chip.body {
+    background: var(--ink);
+    color: #fff;
+  }
   .entry .e-note {
     flex: 0 0 100%;
     box-sizing: border-box;
@@ -1734,6 +1778,16 @@
       <div class="current-level" id="currentLevelBadge"></div>
       <div class="question" id="reasonQuestion"><em>뭐가</em> 그래?</div>
       <div class="reasons" id="reasons"></div>
+      <div class="body-wrap">
+        <div class="body-title">몸은 어때? <span>선택</span></div>
+        <div class="body-options" id="bodyOptions">
+          <button type="button" class="body-opt" data-v="5">아주 좋아</button>
+          <button type="button" class="body-opt" data-v="4">좋아</button>
+          <button type="button" class="body-opt" data-v="3">보통</button>
+          <button type="button" class="body-opt" data-v="2">조금 안좋아</button>
+          <button type="button" class="body-opt" data-v="1">많이 안좋아</button>
+        </div>
+      </div>
       <div class="note-wrap">
         <div class="legacy-note" id="legacyNote" hidden></div>
         <label class="note-label good" for="noteGood">👍 좋았던 점</label>
@@ -3698,6 +3752,7 @@ function renderReasons() {
   $('noteGood').value = '';
   $('noteBad').value = '';
   setLegacyNote('');
+  setBody(null);
   state.reasons = [];
   updateReasonUI();
 }
@@ -3789,6 +3844,7 @@ function startEditEntry(entry) {
   $('noteBad').value = entry.bad || '';
   const isLegacy = !entry.good && !entry.bad && !!entry.note;
   setLegacyNote(isLegacy ? entry.note : '');
+  setBody(entry.body || null);
 
   // Sync save button enabled state, count badge, etc.
   if (typeof updateReasonUI === 'function') updateReasonUI();
@@ -4050,6 +4106,23 @@ async function selectNotifTime(hour) {
   setTimeout(() => closeNotifModal(), 500);
 }
 
+/* Body condition (optional, 1-5, higher = better). Tapping the selected one again clears it. */
+const BODY_LABELS = { 5: '아주 좋아', 4: '좋아', 3: '보통', 2: '조금 안좋아', 1: '많이 안좋아' };
+
+function setBody(v) {
+  state.body = v || null;
+  document.querySelectorAll('#bodyOptions .body-opt').forEach(b => {
+    b.classList.toggle('selected', Number(b.dataset.v) === state.body);
+  });
+}
+
+document.addEventListener('click', (ev) => {
+  const b = ev.target.closest && ev.target.closest('#bodyOptions .body-opt');
+  if (!b) return;
+  const v = Number(b.dataset.v);
+  setBody(state.body === v ? null : v);
+});
+
 /* Legacy single-memo entries: shown read-only above the good/bad fields */
 function setLegacyNote(text) {
   const el = $('legacyNote');
@@ -4088,6 +4161,8 @@ async function save() {
     ts: existing ? existing.ts : Date.now(),
     level: state.level,
     reasons: state.reasons.slice(),
+    // null (not omitted) so clearing it on edit overwrites the cloud copy (merge:true)
+    body: state.body || null,
     ...buildNoteFields()
   };
 
@@ -4298,7 +4373,10 @@ async function renderHistory() {
       const d = new Date(e.ts);
       const timeStr = `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
       const rsKeys = reasonsOf(e);
-      const chips = rsKeys
+      const bodyChip = BODY_LABELS[e.body]
+        ? `<span class="e-chip body">몸 ${BODY_LABELS[e.body]}</span>`
+        : '';
+      const chips = bodyChip + rsKeys
         .map(k => `<span class="e-chip">${REASON_SHORT[k]}</span>`)
         .join('');
       // Show edit button only for today's entry (yesterday and earlier are locked)
