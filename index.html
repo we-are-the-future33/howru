@@ -390,6 +390,26 @@
   textarea.note::placeholder {
     color: var(--ink-mute);
   }
+  .note-label {
+    display: block;
+    margin: 4px 4px 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-soft);
+  }
+  .note-label.bad { margin-top: 14px; }
+  .legacy-note {
+    margin: 0 4px 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: var(--bg-warm);
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    white-space: pre-wrap;
+    word-break: keep-all;
+  }
+  .legacy-note[hidden] { display: none; }
   textarea.note:focus {
     outline: none;
     box-shadow: var(--shadow);
@@ -706,6 +726,16 @@
     white-space: pre-wrap;      /* keep line breaks the user typed */
     word-break: keep-all;       /* don't split Korean words mid-syllable */
     overflow-wrap: anywhere;    /* still break very long strings (URLs etc.) */
+  }
+  .entry .e-note + .e-note { margin-top: -2px; }
+  .entry .e-note.good { background: rgba(143, 212, 163, 0.18); }
+  .entry .e-note.bad { background: rgba(120, 150, 210, 0.15); }
+  .entry .e-note-label {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink);
   }
 
   /* SVG face icons */
@@ -1705,7 +1735,11 @@
       <div class="question" id="reasonQuestion"><em>뭐가</em> 그래?</div>
       <div class="reasons" id="reasons"></div>
       <div class="note-wrap">
-        <textarea class="note" id="note" placeholder="한 줄 메모..." maxlength="200"></textarea>
+        <div class="legacy-note" id="legacyNote" hidden></div>
+        <label class="note-label good" for="noteGood">👍 좋았던 점</label>
+        <textarea class="note" id="noteGood" placeholder="오늘 좋았던 일, 고마웠던 일" maxlength="200"></textarea>
+        <label class="note-label bad" for="noteBad">👎 안 좋았던 점</label>
+        <textarea class="note" id="noteBad" placeholder="오늘 힘들었던 일, 아쉬웠던 일" maxlength="200"></textarea>
       </div>
       <div class="actions">
         <button class="btn ghost" id="backBtn">←</button>
@@ -3661,7 +3695,9 @@ function renderReasons() {
     b.onclick = () => toggleReason(k);
     host.appendChild(b);
   });
-  $('note').value = '';
+  $('noteGood').value = '';
+  $('noteBad').value = '';
+  setLegacyNote('');
   state.reasons = [];
   updateReasonUI();
 }
@@ -3746,9 +3782,13 @@ function startEditEntry(entry) {
     }
   });
 
-  // Restore memo text
-  const noteEl = $('note');
-  if (noteEl) noteEl.value = entry.note || '';
+  // Restore good/bad text. Entries saved before the split only have `note`:
+  // keep it untouched and show it above the fields (saved back as-is if left empty).
+  const noteEl = $('noteGood');
+  $('noteGood').value = entry.good || '';
+  $('noteBad').value = entry.bad || '';
+  const isLegacy = !entry.good && !entry.bad && !!entry.note;
+  setLegacyNote(isLegacy ? entry.note : '');
 
   // Sync save button enabled state, count badge, etc.
   if (typeof updateReasonUI === 'function') updateReasonUI();
@@ -4010,6 +4050,33 @@ async function selectNotifTime(hour) {
   setTimeout(() => closeNotifModal(), 500);
 }
 
+/* Legacy single-memo entries: shown read-only above the good/bad fields */
+function setLegacyNote(text) {
+  const el = $('legacyNote');
+  if (!el) return;
+  el.textContent = text ? `기존 메모\n${text}` : '';
+  el.hidden = !text;
+  el.dataset.text = text || '';
+}
+
+/* good/bad are the source of truth. `note` is kept as a combined text so the
+   Sheets sync (functions/sheet-sync.js reads entry.note) and older code keep working. */
+function buildNoteFields() {
+  const good = $('noteGood').value.trim();
+  const bad = $('noteBad').value.trim();
+  if (!good && !bad) {
+    // Nothing typed: keep an old single memo if this entry had one
+    const legacy = ($('legacyNote') && $('legacyNote').dataset.text) || '';
+    // good/bad are written as '' (not omitted): cloud save uses merge:true, so omitting
+    // them would leave a previously saved value behind after the user clears the field.
+    return { good: '', bad: '', note: legacy };
+  }
+  const parts = [];
+  if (good) parts.push(`좋은 점: ${good}`);
+  if (bad) parts.push(`안 좋은 점: ${bad}`);
+  return { good, bad, note: parts.join('\n') };
+}
+
 async function save() {
   if (!state.level || state.reasons.length === 0) return;
 
@@ -4021,7 +4088,7 @@ async function save() {
     ts: existing ? existing.ts : Date.now(),
     level: state.level,
     reasons: state.reasons.slice(),
-    note: $('note').value.trim()
+    ...buildNoteFields()
   };
 
   // Auth gate: require login before saving
@@ -4251,7 +4318,7 @@ async function renderHistory() {
           <div class="e-chips">${chips}</div>
         </div>
         ${editBtn}
-        ${e.note ? `<div class="e-note">${escapeHtml(e.note)}</div>` : ''}
+        ${noteHtml(e)}
       `;
       // Wire edit button
       const btn = row.querySelector('.e-edit');
@@ -4263,6 +4330,17 @@ async function renderHistory() {
     });
     host.appendChild(group);
   });
+}
+
+/* New entries: separate 좋은 점 / 안 좋은 점 blocks. Old entries (note only): single block as before. */
+function noteHtml(e) {
+  if (e.good || e.bad) {
+    const block = (cls, label, text) => text
+      ? `<div class="e-note ${cls}"><span class="e-note-label">${label}</span>${escapeHtml(text)}</div>`
+      : '';
+    return block('good', '👍 좋았던 점', e.good) + block('bad', '👎 안 좋았던 점', e.bad);
+  }
+  return e.note ? `<div class="e-note">${escapeHtml(e.note)}</div>` : '';
 }
 
 function groupByDay(entries) {
