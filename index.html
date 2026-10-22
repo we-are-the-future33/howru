@@ -792,6 +792,7 @@
     line-height: 1.3;
   }
   /* Note spans the full card width (below face/meta/chips), not the narrow text column */
+  .entry .e-chips.body-group { margin-top: 10px; }   /* body = its own group below the mood chips */
   .entry .e-chip.body {
     background: var(--ink);
     color: #fff;
@@ -4470,7 +4471,7 @@ async function renderHistory() {
         .map(k => `<span class="e-chip bwhy">${BODY_WHY_LABELS[k]}</span>`)
         .join('');
       const bodyRow = (bodyChip || whyChips)
-        ? `<div class="e-chips">${bodyChip}${whyChips}</div>` : '';
+        ? `<div class="e-chips body-group">${bodyChip}${whyChips}</div>` : '';
       const chips = rsKeys
         .map(k => `<span class="e-chip">${REASON_SHORT[k]}</span>`)
         .join('');
@@ -4488,8 +4489,8 @@ async function renderHistory() {
             <span class="e-level">${lv.k}</span>
             <span>${timeStr}</span>
           </div>
-          ${bodyRow}
           <div class="e-chips">${chips}</div>
+          ${bodyRow}
         </div>
         ${editBtn}
         ${noteHtml(e)}
