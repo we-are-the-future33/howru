@@ -767,11 +767,14 @@
   .entry .e-chips {
     display: flex;
     flex-wrap: wrap;
+    align-items: flex-start;   /* don't stretch chips to the tallest one (emoji chips are taller) */
     gap: 4px;
     margin-top: 6px;
   }
   .entry .e-chip {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     padding: 4px 10px;
     border-radius: 999px;
     background: var(--bg-warm);
@@ -786,7 +789,7 @@
     background: var(--ink);
     color: #fff;
   }
-  .entry .e-chip.body-why {
+  .entry .e-chip.bwhy {
     background: transparent;
     box-shadow: inset 0 0 0 1px var(--ink-mute);
     color: var(--ink);
@@ -4454,9 +4457,11 @@ async function renderHistory() {
         : '';
       const whyChips = (e.bodyWhy || [])
         .filter(k => BODY_WHY_LABELS[k])
-        .map(k => `<span class="e-chip body-why">${BODY_WHY_LABELS[k]}</span>`)
+        .map(k => `<span class="e-chip bwhy">${BODY_WHY_LABELS[k]}</span>`)
         .join('');
-      const chips = bodyChip + whyChips + rsKeys
+      const bodyRow = (bodyChip || whyChips)
+        ? `<div class="e-chips">${bodyChip}${whyChips}</div>` : '';
+      const chips = rsKeys
         .map(k => `<span class="e-chip">${REASON_SHORT[k]}</span>`)
         .join('');
       // Show edit button only for today's entry (yesterday and earlier are locked)
@@ -4473,6 +4478,7 @@ async function renderHistory() {
             <span class="e-level">${lv.k}</span>
             <span>${timeStr}</span>
           </div>
+          ${bodyRow}
           <div class="e-chips">${chips}</div>
         </div>
         ${editBtn}
