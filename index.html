@@ -1823,17 +1823,17 @@
           <button type="button" class="body-opt" data-v="1">많이 안좋아</button>
         </div>
         <div class="body-why" id="bodyWhy" hidden>
-          <div class="body-why-title">어디가 안좋아? <span>여러 개 선택 가능</span></div>
+          <div class="body-why-title">어디가 안좋아? <span>선택 · 여러 개 가능</span></div>
           <div class="body-why-options">
-            <button type="button" class="why-opt" data-k="fatigue">수면·피로</button>
-            <button type="button" class="why-opt" data-k="cold">감기·몸살</button>
-            <button type="button" class="why-opt" data-k="nerve">신경·두통</button>
-            <button type="button" class="why-opt" data-k="mouth">구강·턱</button>
-            <button type="button" class="why-opt" data-k="resp">호흡기</button>
-            <button type="button" class="why-opt" data-k="gut">소화기</button>
-            <button type="button" class="why-opt" data-k="msk">근골격</button>
-            <button type="button" class="why-opt" data-k="injury">외상</button>
-            <button type="button" class="why-opt" data-k="etc">기타</button>
+            <button type="button" class="why-opt" data-k="fatigue">😴 수면·피로</button>
+            <button type="button" class="why-opt" data-k="cold">🤧 감기·몸살</button>
+            <button type="button" class="why-opt" data-k="nerve">😵 신경·두통</button>
+            <button type="button" class="why-opt" data-k="mouth">🦷 구강·턱</button>
+            <button type="button" class="why-opt" data-k="resp">🫁 호흡기</button>
+            <button type="button" class="why-opt" data-k="gut">🤢 소화기</button>
+            <button type="button" class="why-opt" data-k="msk">🦴 근골격</button>
+            <button type="button" class="why-opt" data-k="injury">🩹 외상</button>
+            <button type="button" class="why-opt" data-k="etc">📝 기타</button>
           </div>
         </div>
       </div>
@@ -4160,8 +4160,8 @@ const BODY_LABELS = { 5: '아주 좋아', 4: '좋아', 3: '보통', 2: '조금 �
 
 /* Where it hurts. Shown only when body is 1-2 (조금/많이 안좋아). Order = whole body -> head to toe -> accident -> etc. */
 const BODY_WHY_LABELS = {
-  fatigue: '수면·피로', cold: '감기·몸살', nerve: '신경·두통', mouth: '구강·턱',
-  resp: '호흡기', gut: '소화기', msk: '근골격', injury: '외상', etc: '기타'
+  fatigue: '😴 수면·피로', cold: '🤧 감기·몸살', nerve: '😵 신경·두통', mouth: '🦷 구강·턱',
+  resp: '🫁 호흡기', gut: '🤢 소화기', msk: '🦴 근골격', injury: '🩹 외상', etc: '📝 기타'
 };
 
 function renderBodyWhy() {
