@@ -430,6 +430,36 @@
     background: var(--ink);
     color: #fff;
   }
+  .body-why { margin-top: 14px; }
+  .body-why[hidden] { display: none; }
+  .body-why-title {
+    margin: 0 4px 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-soft);
+  }
+  .body-why-title span {
+    margin-left: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-mute);
+  }
+  .body-why-options { display: flex; flex-wrap: wrap; gap: 6px; }
+  .why-opt {
+    padding: 8px 13px;
+    border: none;
+    border-radius: 999px;
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, transform 0.1s;
+  }
+  .why-opt:active { transform: scale(0.95); }
+  .why-opt.selected { background: var(--ink); color: #fff; }
   .note-label {
     display: block;
     margin: 4px 4px 6px;
@@ -755,6 +785,11 @@
   .entry .e-chip.body {
     background: var(--ink);
     color: #fff;
+  }
+  .entry .e-chip.body-why {
+    background: transparent;
+    box-shadow: inset 0 0 0 1px var(--ink-mute);
+    color: var(--ink);
   }
   .entry .e-note {
     flex: 0 0 100%;
@@ -1786,6 +1821,20 @@
           <button type="button" class="body-opt" data-v="3">보통</button>
           <button type="button" class="body-opt" data-v="2">조금 안좋아</button>
           <button type="button" class="body-opt" data-v="1">많이 안좋아</button>
+        </div>
+        <div class="body-why" id="bodyWhy" hidden>
+          <div class="body-why-title">어디가 안좋아? <span>여러 개 선택 가능</span></div>
+          <div class="body-why-options">
+            <button type="button" class="why-opt" data-k="fatigue">수면·피로</button>
+            <button type="button" class="why-opt" data-k="cold">감기·몸살</button>
+            <button type="button" class="why-opt" data-k="nerve">신경·두통</button>
+            <button type="button" class="why-opt" data-k="mouth">구강·턱</button>
+            <button type="button" class="why-opt" data-k="resp">호흡기</button>
+            <button type="button" class="why-opt" data-k="gut">소화기</button>
+            <button type="button" class="why-opt" data-k="msk">근골격</button>
+            <button type="button" class="why-opt" data-k="injury">외상</button>
+            <button type="button" class="why-opt" data-k="etc">기타</button>
+          </div>
         </div>
       </div>
       <div class="note-wrap">
@@ -3752,7 +3801,7 @@ function renderReasons() {
   $('noteGood').value = '';
   $('noteBad').value = '';
   setLegacyNote('');
-  setBody(null);
+  setBody(null, []);
   state.reasons = [];
   updateReasonUI();
 }
@@ -3844,7 +3893,7 @@ function startEditEntry(entry) {
   $('noteBad').value = entry.bad || '';
   const isLegacy = !entry.good && !entry.bad && !!entry.note;
   setLegacyNote(isLegacy ? entry.note : '');
-  setBody(entry.body || null);
+  setBody(entry.body || null, entry.bodyWhy || []);
 
   // Sync save button enabled state, count badge, etc.
   if (typeof updateReasonUI === 'function') updateReasonUI();
@@ -4109,18 +4158,44 @@ async function selectNotifTime(hour) {
 /* Body condition (optional, 1-5, higher = better). Tapping the selected one again clears it. */
 const BODY_LABELS = { 5: '아주 좋아', 4: '좋아', 3: '보통', 2: '조금 안좋아', 1: '많이 안좋아' };
 
-function setBody(v) {
-  state.body = v || null;
-  document.querySelectorAll('#bodyOptions .body-opt').forEach(b => {
-    b.classList.toggle('selected', Number(b.dataset.v) === state.body);
+/* Where it hurts. Shown only when body is 1-2 (조금/많이 안좋아). Order = whole body -> head to toe -> accident -> etc. */
+const BODY_WHY_LABELS = {
+  fatigue: '수면·피로', cold: '감기·몸살', nerve: '신경·두통', mouth: '구강·턱',
+  resp: '호흡기', gut: '소화기', msk: '근골격', injury: '외상', etc: '기타'
+};
+
+function renderBodyWhy() {
+  const show = state.body === 1 || state.body === 2;
+  if (!show) state.bodyWhy = [];
+  const box = $('bodyWhy');
+  if (box) box.hidden = !show;
+  document.querySelectorAll('#bodyWhy .why-opt').forEach(b => {
+    b.classList.toggle('selected', (state.bodyWhy || []).includes(b.dataset.k));
   });
 }
 
+function setBody(v, why) {
+  state.body = v || null;
+  if (why !== undefined) state.bodyWhy = Array.isArray(why) ? why.slice() : [];
+  document.querySelectorAll('#bodyOptions .body-opt').forEach(b => {
+    b.classList.toggle('selected', Number(b.dataset.v) === state.body);
+  });
+  renderBodyWhy();
+}
+
 document.addEventListener('click', (ev) => {
+  const w = ev.target.closest && ev.target.closest('#bodyWhy .why-opt');
+  if (w) {
+    const k = w.dataset.k;
+    const cur = state.bodyWhy || [];
+    state.bodyWhy = cur.includes(k) ? cur.filter(x => x !== k) : cur.concat(k);
+    renderBodyWhy();
+    return;
+  }
   const b = ev.target.closest && ev.target.closest('#bodyOptions .body-opt');
   if (!b) return;
   const v = Number(b.dataset.v);
-  setBody(state.body === v ? null : v);
+  setBody(state.body === v ? null : v);   // body 3+ or cleared -> why list is cleared
 });
 
 /* Legacy single-memo entries: shown read-only above the good/bad fields */
@@ -4163,6 +4238,7 @@ async function save() {
     reasons: state.reasons.slice(),
     // null (not omitted) so clearing it on edit overwrites the cloud copy (merge:true)
     body: state.body || null,
+    bodyWhy: (state.body === 1 || state.body === 2) ? (state.bodyWhy || []).slice() : [],
     ...buildNoteFields()
   };
 
@@ -4376,7 +4452,11 @@ async function renderHistory() {
       const bodyChip = BODY_LABELS[e.body]
         ? `<span class="e-chip body">몸 ${BODY_LABELS[e.body]}</span>`
         : '';
-      const chips = bodyChip + rsKeys
+      const whyChips = (e.bodyWhy || [])
+        .filter(k => BODY_WHY_LABELS[k])
+        .map(k => `<span class="e-chip body-why">${BODY_WHY_LABELS[k]}</span>`)
+        .join('');
+      const chips = bodyChip + whyChips + rsKeys
         .map(k => `<span class="e-chip">${REASON_SHORT[k]}</span>`)
         .join('');
       // Show edit button only for today's entry (yesterday and earlier are locked)
