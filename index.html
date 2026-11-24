@@ -853,6 +853,56 @@
     overflow-wrap: anywhere;    /* still break very long strings (URLs etc.) */
   }
   .entry .e-note + .e-note { margin-top: -2px; }
+  /* Topic-paired notes (per reason chip: 좋았던 점 / 아쉬운 점) */
+  .topic-notes { display: flex; flex-direction: column; gap: 12px; }
+  .topic-notes:empty { display: none; }
+  .topic-card {
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    border-radius: var(--r);
+    padding: 12px 14px;
+  }
+  .topic-card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .topic-row { display: flex; align-items: flex-start; gap: 8px; }
+  .topic-row + .topic-row { margin-top: 6px; }
+  .topic-row .t-ico { font-size: 15px; line-height: 38px; flex: 0 0 auto; }
+  .topic-row textarea {
+    flex: 1;
+    min-height: 38px;
+    padding: 9px 12px;
+    border: none;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1.4;
+    color: var(--ink);
+    resize: none;
+    overflow: hidden;
+  }
+  .topic-row.good textarea { background: rgba(143, 212, 163, 0.16); }
+  .topic-row.bad textarea { background: rgba(120, 150, 210, 0.13); }
+  .topic-row textarea::placeholder { color: var(--ink-mute); }
+  .topic-row textarea:focus { outline: none; box-shadow: inset 0 0 0 1.5px rgba(43,182,115,0.5); }
+  .topic-hint { font-size: 13px; color: var(--ink-mute); padding: 4px 2px; }
+  .entry .e-topics { flex: 0 0 100%; display: flex; flex-direction: column; gap: 6px; margin-top: 2px; }
+  .entry .e-topic {
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: var(--bg-warm);
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
+  .entry .e-topic-name { display: block; font-size: 12px; font-weight: 700; color: var(--ink); margin-bottom: 2px; }
+  .entry .e-topic-line { display: flex; gap: 6px; white-space: pre-wrap; }
+  .entry .e-topic-line .t-ico { flex: 0 0 auto; }
   .entry .e-note.good { background: rgba(143, 212, 163, 0.18); }
   .entry .e-note.bad { background: rgba(120, 150, 210, 0.15); }
   .entry .e-note-label {
@@ -1885,10 +1935,14 @@
       </div>
       <div class="note-wrap">
         <div class="legacy-note" id="legacyNote" hidden></div>
-        <label class="note-label good" for="noteGood">👍 좋았던 점</label>
-        <textarea class="note" id="noteGood" placeholder="오늘 좋았던 일, 고마웠던 일" maxlength="200"></textarea>
-        <label class="note-label bad" for="noteBad">👎 안 좋았던 점</label>
-        <textarea class="note" id="noteBad" placeholder="오늘 힘들었던 일, 아쉬웠던 일" maxlength="200"></textarea>
+        <div class="topic-notes" id="topicNotes"></div>
+        <!-- Older entries saved with one overall 좋았던/안 좋았던 점: shown only when editing those -->
+        <div id="legacyGB" hidden>
+          <label class="note-label good" for="noteGood">👍 좋았던 점 (기존)</label>
+          <textarea class="note" id="noteGood" maxlength="200"></textarea>
+          <label class="note-label bad" for="noteBad">👎 안 좋았던 점 (기존)</label>
+          <textarea class="note" id="noteBad" maxlength="200"></textarea>
+        </div>
       </div>
       <div class="actions">
         <button class="btn ghost" id="backBtn">←</button>
@@ -2493,7 +2547,7 @@ const REASON_SHORT = {
   unknown: '모르겠어',
 };
 
-let state = { step: 'level', level: null, reasons: [], user: null };
+let state = { step: 'level', level: null, reasons: [], user: null, topicNotes: {} };
 
 /* ================ ONBOARDING ================ */
 const ONBOARD_FLAG_KEY = 'howru:onboarded';
@@ -3837,6 +3891,9 @@ function onPickDate(k) {
 function clearCheckinForm() {
   if ($('noteGood')) $('noteGood').value = '';
   if ($('noteBad')) $('noteBad').value = '';
+  state.topicNotes = {};
+  if ($('topicNotes')) $('topicNotes').dataset.order = '';
+  setLegacyGB(false);
   if (typeof setLegacyNote === 'function') setLegacyNote('');
   if (typeof setBody === 'function') setBody(null, []);
 }
@@ -3935,9 +3992,11 @@ function renderReasons() {
   });
   $('noteGood').value = '';
   $('noteBad').value = '';
+  setLegacyGB(false);
   setLegacyNote('');
   setBody(null, []);
   state.reasons = [];
+  state.topicNotes = {};
   updateReasonUI();
 }
 
@@ -3975,6 +4034,53 @@ function updateReasonUI() {
     countEl.classList.toggle('hidden', count === 0);
   }
   $('saveBtn').disabled = (count === 0);
+  renderTopicNotes();
+}
+
+/* ================ TOPIC NOTES ================ */
+// One card per selected reason chip, each with 👍 좋았던 점 / 👎 아쉬운 점.
+// Text typed for a chip is kept in state.topicNotes even if the chip is toggled off/on.
+function topicLabel(k) {
+  return k === 'unknown' ? '오늘' : (REASON_SHORT[k] || k);
+}
+
+function autoGrow(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+function renderTopicNotes() {
+  const host = $('topicNotes');
+  if (!host) return;
+  // Keep focus/cursor if the same card set is re-rendered
+  const order = state.reasons.slice();
+  if (host.dataset.order === order.join(',')) return;
+  host.dataset.order = order.join(',');
+  host.innerHTML = '';
+  if (!order.length) return;
+  order.forEach(k => {
+    const t = state.topicNotes[k] || (state.topicNotes[k] = { good: '', bad: '' });
+    const card = document.createElement('div');
+    card.className = 'topic-card';
+    card.innerHTML = `
+      <div class="topic-card-title">${escapeHtml(topicLabel(k))}</div>
+      <div class="topic-row good"><span class="t-ico">👍</span><textarea rows="1" maxlength="200" data-k="${k}" data-f="good" placeholder="좋았던 점"></textarea></div>
+      <div class="topic-row bad"><span class="t-ico">👎</span><textarea rows="1" maxlength="200" data-k="${k}" data-f="bad" placeholder="아쉬운 점"></textarea></div>`;
+    card.querySelectorAll('textarea').forEach(ta => {
+      ta.value = t[ta.dataset.f] || '';
+      ta.addEventListener('input', () => {
+        state.topicNotes[k][ta.dataset.f] = ta.value;
+        autoGrow(ta);
+      });
+    });
+    host.appendChild(card);
+  });
+  requestAnimationFrame(() => host.querySelectorAll('textarea').forEach(autoGrow));
+}
+
+function setLegacyGB(show) {
+  const el = $('legacyGB');
+  if (el) el.hidden = !show;
 }
 
 function showScreen(name) {
@@ -4023,11 +4129,22 @@ function startEditEntry(entry) {
 
   // Restore good/bad text. Entries saved before the split only have `note`:
   // keep it untouched and show it above the fields (saved back as-is if left empty).
-  const noteEl = $('noteGood');
-  $('noteGood').value = entry.good || '';
-  $('noteBad').value = entry.bad || '';
-  const isLegacy = !entry.good && !entry.bad && !!entry.note;
+  // New entries: per-topic notes. Older entries: overall good/bad (shown in legacy fields) or single note.
+  state.topicNotes = {};
+  const hasTopics = entry.topics && typeof entry.topics === 'object';
+  if (hasTopics) {
+    Object.entries(entry.topics).forEach(([k, v]) => {
+      state.topicNotes[k] = { good: (v && v.good) || '', bad: (v && v.bad) || '' };
+    });
+  }
+  if ($('topicNotes')) $('topicNotes').dataset.order = '';
+  const oldGB = !hasTopics && (entry.good || entry.bad);
+  $('noteGood').value = oldGB ? (entry.good || '') : '';
+  $('noteBad').value = oldGB ? (entry.bad || '') : '';
+  setLegacyGB(!!oldGB);
+  const isLegacy = !hasTopics && !entry.good && !entry.bad && !!entry.note;
   setLegacyNote(isLegacy ? entry.note : '');
+  const noteEl = oldGB ? $('noteGood') : null;
   setBody(entry.body || null, entry.bodyWhy || []);
 
   // Sync save button enabled state, count badge, etc.
@@ -4038,7 +4155,9 @@ function startEditEntry(entry) {
 
   // After paint, scroll memo into view + focus + place cursor at end
   setTimeout(() => {
-    if (noteEl) {
+    const focusEl = noteEl || document.querySelector('#topicNotes textarea');
+    if (focusEl) {
+      const noteEl = focusEl;
       noteEl.focus();
       const len = noteEl.value.length;
       try { noteEl.setSelectionRange(len, len); } catch(_) {}
@@ -4345,19 +4464,44 @@ function setLegacyNote(text) {
 /* good/bad are the source of truth. `note` is kept as a combined text so the
    Sheets sync (functions/sheet-sync.js reads entry.note) and older code keep working. */
 function buildNoteFields() {
-  const good = $('noteGood').value.trim();
-  const bad = $('noteBad').value.trim();
+  // Topic notes for the currently selected chips only
+  const topics = {};
+  const goodLines = [], badLines = [], noteLines = [];
+  state.reasons.forEach(k => {
+    const t = state.topicNotes[k] || {};
+    const g = (t.good || '').trim();
+    const b = (t.bad || '').trim();
+    if (!g && !b) return;
+    topics[k] = { good: g, bad: b };
+    const name = topicLabel(k);
+    if (g) goodLines.push(`${name}: ${g}`);
+    if (b) badLines.push(`${name}: ${b}`);
+    noteLines.push(`[${name}] ` + [g && `좋음: ${g}`, b && `아쉬움: ${b}`].filter(Boolean).join(' / '));
+  });
+  // Old overall good/bad fields (only visible when editing an older entry)
+  const oldGood = $('legacyGB') && !$('legacyGB').hidden ? $('noteGood').value.trim() : '';
+  const oldBad = $('legacyGB') && !$('legacyGB').hidden ? $('noteBad').value.trim() : '';
+  if (noteLines.length) {
+    // good/bad kept as joined text for older code paths; note feeds the Sheets sync
+    if (oldGood) goodLines.push(oldGood);
+    if (oldBad) badLines.push(oldBad);
+    if (oldGood) noteLines.push(`좋은 점: ${oldGood}`);
+    if (oldBad) noteLines.push(`안 좋은 점: ${oldBad}`);
+    return { topics, good: goodLines.join('\n'), bad: badLines.join('\n'), note: noteLines.join('\n') };
+  }
+  const good = oldGood;
+  const bad = oldBad;
   if (!good && !bad) {
     // Nothing typed: keep an old single memo if this entry had one
     const legacy = ($('legacyNote') && $('legacyNote').dataset.text) || '';
     // good/bad are written as '' (not omitted): cloud save uses merge:true, so omitting
     // them would leave a previously saved value behind after the user clears the field.
-    return { good: '', bad: '', note: legacy };
+    return { topics: null, good: '', bad: '', note: legacy };
   }
   const parts = [];
   if (good) parts.push(`좋은 점: ${good}`);
   if (bad) parts.push(`안 좋은 점: ${bad}`);
-  return { good, bad, note: parts.join('\n') };
+  return { topics: null, good, bad, note: parts.join('\n') };
 }
 
 async function save() {
@@ -4654,6 +4798,17 @@ async function renderHistory() {
 
 /* New entries: separate 좋은 점 / 안 좋은 점 blocks. Old entries (note only): single block as before. */
 function noteHtml(e) {
+  if (e.topics && typeof e.topics === 'object' && Object.keys(e.topics).length) {
+    const order = reasonsOf(e).filter(k => e.topics[k]);
+    Object.keys(e.topics).forEach(k => { if (!order.includes(k)) order.push(k); });
+    const line = (ico, text) => text
+      ? `<div class="e-topic-line"><span class="t-ico">${ico}</span><span>${escapeHtml(text)}</span></div>` : '';
+    return `<div class="e-topics">${order.map(k => {
+      const t = e.topics[k] || {};
+      if (!t.good && !t.bad) return '';
+      return `<div class="e-topic"><span class="e-topic-name">${escapeHtml(topicLabel(k))}</span>${line('👍', t.good)}${line('👎', t.bad)}</div>`;
+    }).join('')}</div>`;
+  }
   if (e.good || e.bad) {
     const block = (cls, label, text) => text
       ? `<div class="e-note ${cls}"><span class="e-note-label">${label}</span>${escapeHtml(text)}</div>`
