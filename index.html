@@ -3833,11 +3833,19 @@ function reasonsOf(entry) {
 
 function setHeaderDate() {
   // Shows the date being written: today, or the past date chosen from the picker
-  const d = state.targetDate ? keyToDate(state.targetDate) : new Date();
+  const editing = !!state.editingKey && (state.step === 'reason' || state.step === 'level');
+  const k = state.targetDate || (editing ? state.editingKey : null);
+  const d = k ? keyToDate(k) : new Date();
   const months = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
   const days = ['일','월','화','수','목','금','토'];
-  $('datePillText').textContent = `${months[d.getMonth()]} ${d.getDate()}일 · ${days[d.getDay()]}`;
-  $('datePill').classList.toggle('past', !!state.targetDate);
+  const md = `${months[d.getMonth()]} ${d.getDate()}일`;
+  // Label says what the date means: editing → the entry's date; past check-in → date being written; else today
+  let label;
+  if (editing) label = `이 기록 날짜: ${md}`;
+  else if (state.targetDate) label = `${md}에 기록 중`;
+  else label = `${md} · ${days[d.getDay()]}`;
+  $('datePillText').textContent = label;
+  $('datePill').classList.toggle('past', editing || !!state.targetDate);
   const picker = $('datePicker');
   if (picker) {
     picker.max = dateKey(Date.now());          // no future dates
@@ -4099,6 +4107,7 @@ function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   $(`screen-${name}`).classList.add('active');
   state.step = name;
+  if ($('datePillText')) setHeaderDate();
   window.scrollTo(0, 0);
 }
 
@@ -4163,6 +4172,7 @@ function startEditEntry(entry) {
   setBody(entry.body || null, entry.bodyWhy || []);
 
   state.editingKey = dateKey(entry.ts);
+  setHeaderDate();
   // Sync save button enabled state, count badge, etc.
   if (typeof updateReasonUI === 'function') updateReasonUI();
 
@@ -4577,6 +4587,7 @@ async function completeSave(entry, opts = {}) {
     delete entry._movedFrom;
     await saveEntry(entry);
     state.editingKey = null;
+    setHeaderDate();
     if (movedFrom && movedFrom !== dateKey(entry.ts)) {
       localStorage.removeItem(`${KEY_PREFIX}${movedFrom}`);
       if (isCloudSyncEnabled()) {
