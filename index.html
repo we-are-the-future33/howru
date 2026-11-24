@@ -139,6 +139,41 @@
     font-weight: 500;
     color: var(--ink-soft);
     letter-spacing: 0;
+    position: relative;
+    cursor: pointer;
+  }
+  .date-pill::after {
+    content: '▾';
+    margin-left: 4px;
+    font-size: 10px;
+    opacity: 0.6;
+  }
+  .date-pill.past {
+    background: #e8f6ee;
+    color: #1f8f57;
+    font-weight: 600;
+  }
+  /* Transparent native date input over the pill: tapping opens the OS date picker */
+  .date-pill input[type="date"] {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    font-size: 16px; /* prevents iOS zoom */
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .day-group.focus-flash {
+    animation: dayFocusFlash 2s ease-out;
+  }
+  @keyframes dayFocusFlash {
+    0%, 30% { box-shadow: 0 0 0 3px rgba(43,182,115,0.55); }
+    100% { box-shadow: var(--shadow-sm); }
   }
   .header-right {
     display: flex;
@@ -1802,7 +1837,7 @@
   <header>
     <div class="logo">howru<span class="dot"></span></div>
     <div class="header-right">
-      <div class="date-pill" id="datePill"></div>
+      <label class="date-pill" id="datePill"><span id="datePillText"></span><input type="date" id="datePicker" aria-label="날짜 선택"></label>
       <button class="user-btn" id="userBtn" aria-label="account">
         <span class="anon">👤</span>
       </button>
@@ -1815,7 +1850,7 @@
   <main>
     <!-- Step 1: Mood level -->
     <section class="screen active" id="screen-level">
-      <div class="question">오늘 <em>어때?</em></div>
+      <div class="question" id="levelQuestion">오늘 <em>어때?</em></div>
       <div class="levels" id="levels"></div>
     </section>
 
@@ -3743,10 +3778,96 @@ function reasonsOf(entry) {
 }
 
 function setHeaderDate() {
-  const d = new Date();
+  // Shows the date being written: today, or the past date chosen from the picker
+  const d = state.targetDate ? keyToDate(state.targetDate) : new Date();
   const months = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
   const days = ['일','월','화','수','목','금','토'];
-  $('datePill').textContent = `${months[d.getMonth()]} ${d.getDate()}일 · ${days[d.getDay()]}`;
+  $('datePillText').textContent = `${months[d.getMonth()]} ${d.getDate()}일 · ${days[d.getDay()]}`;
+  $('datePill').classList.toggle('past', !!state.targetDate);
+  const picker = $('datePicker');
+  if (picker) {
+    picker.max = dateKey(Date.now());          // no future dates
+    picker.value = dateKey(d.getTime());
+  }
+  const lq = $('levelQuestion');
+  if (lq) lq.innerHTML = state.targetDate ? '그날은 <em>어땠어?</em>' : '오늘 <em>어때?</em>';
+}
+
+/* ================ PAST-DATE PICKER ================ */
+// 'YYYY-MM-DD' → local Date (midnight)
+function keyToDate(k) {
+  const [y, m, d] = k.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function getEntryByKey(k) {
+  try {
+    const v = localStorage.getItem(`${KEY_PREFIX}${k}`);
+    return v ? JSON.parse(v) : null;
+  } catch(e) { return null; }
+}
+
+// Picker result: past date with entry → history focused on that day,
+// past date without entry → new check-in for that date, today → normal flow.
+function onPickDate(k) {
+  if (!k) return;
+  const todayKey = dateKey(Date.now());
+  if (k > todayKey) return; // future dates not allowed
+  if (k === todayKey) {
+    state.targetDate = null;
+    setHeaderDate();
+    const today = getTodaysEntry();
+    if (today) showTodayResult(today);
+    else goToCheckin();
+    return;
+  }
+  if (getEntryByKey(k)) {
+    state.targetDate = null;
+    setHeaderDate();
+    showHistoryFocus(k);
+  } else {
+    state.targetDate = k;
+    setHeaderDate();
+    clearCheckinForm();
+    goToCheckin();
+  }
+}
+
+// Reset the reason/memo/body form so a new past-date check-in starts empty
+function clearCheckinForm() {
+  if ($('noteGood')) $('noteGood').value = '';
+  if ($('noteBad')) $('noteBad').value = '';
+  if (typeof setLegacyNote === 'function') setLegacyNote('');
+  if (typeof setBody === 'function') setBody(null, []);
+}
+
+function cancelPastCheckin() {
+  state.targetDate = null;
+  setHeaderDate();
+}
+
+// Show the history screen and scroll to / highlight the given day
+async function showHistoryFocus(k) {
+  const today = getTodaysEntry();
+  if (today) {
+    showTodayResult(today);
+  } else {
+    // No check-in today yet: show history without the "오늘 체크인 완료" header
+    const done = document.querySelector('#screen-result .done');
+    if (done) done.style.display = 'none';
+    if ($('againBtn')) $('againBtn').textContent = '오늘 기록하기';
+    showScreen('result');
+    renderMissionBanner();
+  }
+  await renderHistory();
+  setTimeout(() => {
+    const g = document.querySelector(`.day-group[data-date="${k}"]`);
+    if (!g) return;
+    g.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    g.classList.remove('focus-flash');
+    void g.offsetWidth; // restart animation
+    g.classList.add('focus-flash');
+  }, 150);
 }
 
 function renderLevels() {
@@ -3779,7 +3900,7 @@ function renderReasons() {
   host.innerHTML = '';
   const lv = LEVELS.find(l => l.n === state.level);
   const badge = $('currentLevelBadge');
-  const editingToday = !!getTodaysEntry();
+  const editingToday = !state.targetDate && !!getTodaysEntry();
   badge.classList.toggle('editable', editingToday);
   badge.innerHTML = `<span class="dot"></span><span>${lv.k}</span>` +
     (editingToday ? '<span class="badge-change">기분 바꾸기</span>' : '');
@@ -4242,12 +4363,20 @@ function buildNoteFields() {
 async function save() {
   if (!state.level || state.reasons.length === 0) return;
 
-  // If today's entry exists, preserve its original ts/id (this is an edit, not a new entry)
-  const existing = getTodaysEntry();
+  // Past-date check-in (picked from the header date): store on that date, current clock time
+  let targetTs = Date.now();
+  if (state.targetDate) {
+    const t = keyToDate(state.targetDate);
+    const now = new Date();
+    t.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
+    targetTs = t.getTime();
+  }
+  // If an entry already exists for that date, preserve its original ts/id (edit, not new)
+  const existing = state.targetDate ? getEntryByKey(state.targetDate) : getTodaysEntry();
   const isEdit = !!existing;
   const entry = {
     id: existing ? existing.id : `${Date.now()}`,
-    ts: existing ? existing.ts : Date.now(),
+    ts: existing ? existing.ts : targetTs,
     level: state.level,
     reasons: state.reasons.slice(),
     // null (not omitted) so clearing it on edit overwrites the cloud copy (merge:true)
@@ -4273,6 +4402,20 @@ async function completeSave(entry, opts = {}) {
   const isEdit = !!opts.isEdit;
   try {
     await saveEntry(entry);
+    const savedKey = dateKey(entry.ts);
+    if (savedKey !== dateKey(Date.now())) {
+      // Past-date check-in: go to history focused on that date (no celebration/notif prompt)
+      state.targetDate = null;
+      setHeaderDate();
+      state.reasons = [];
+      if ($('saveBtn')) {
+        $('saveBtn').disabled = false;
+        $('saveBtn').textContent = '저장';
+      }
+      await showHistoryFocus(savedKey);
+      checkMissionClearAndCelebrate();
+      return;
+    }
     const lv = LEVELS.find(l => l.n === entry.level);
     $('doneFace').innerHTML = faceSVG(lv.n, 68);
     const titles = {
@@ -4283,6 +4426,7 @@ async function completeSave(entry, opts = {}) {
       1: '여기까지 잘 왔어'
     };
     $('doneTitle').textContent = titles[entry.level];
+    resetResultHeader();
     showScreen('result');
     renderHistory();
     renderMissionBanner();
@@ -4455,6 +4599,7 @@ async function renderHistory() {
   Object.entries(groups).forEach(([day, list]) => {
     const group = document.createElement('div');
     group.className = 'day-group';
+    if (list[0]) group.dataset.date = dateKey(list[0].ts);
     const h = document.createElement('h3');
     h.textContent = day;
     group.appendChild(h);
@@ -4565,6 +4710,14 @@ function initApp() {
   const saveBtn = $('saveBtn');
   const againBtn = $('againBtn');
   if (backBtn) backBtn.addEventListener('click', () => {
+    // Past-date check-in: ← cancels it and returns to today's flow
+    if (state.targetDate) {
+      cancelPastCheckin();
+      state.reasons = [];
+      const t = getTodaysEntry();
+      if (t) showTodayResult(t); else showScreen('level');
+      return;
+    }
     // Editing today's saved entry: ← goes back to today's result (discard unsaved edits).
     // First check-in of the day: ← goes back to the mood screen as before.
     const today = getTodaysEntry();
@@ -4592,6 +4745,19 @@ function initApp() {
       goToCheckin();
     }
   });
+
+  // Header date pill → native date picker (past dates allowed, future blocked)
+  const picker = $('datePicker');
+  if (picker) {
+    const refreshMax = () => { picker.max = dateKey(Date.now()); };
+    picker.addEventListener('focus', refreshMax);
+    picker.addEventListener('pointerdown', refreshMax);
+    picker.addEventListener('change', () => {
+      const k = picker.value;
+      picker.blur();
+      onPickDate(k);
+    });
+  }
 
   // User profile button + dropdown
   const userBtn = $('userBtn');
@@ -4714,9 +4880,16 @@ function showTodayResult(entry) {
     1: '여기까지 잘 왔어'
   };
   $('doneTitle').textContent = titles[entry.level];
+  resetResultHeader();
   showScreen('result');
   renderHistory();
   renderMissionBanner();
+}
+
+function resetResultHeader() {
+  const done = document.querySelector('#screen-result .done');
+  if (done) done.style.display = '';
+  if ($('againBtn')) $('againBtn').textContent = '오늘 기록 수정';
 }
 
 if (document.readyState === 'loading') {
