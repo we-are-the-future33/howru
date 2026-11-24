@@ -120,6 +120,7 @@
     letter-spacing: -0.03em;
     font-style: italic;
     color: var(--ink);
+    white-space: nowrap;
   }
   .logo .dot {
     display: inline-block;
@@ -141,6 +142,8 @@
     letter-spacing: 0;
     position: relative;
     cursor: pointer;
+    white-space: nowrap;   /* keep label and ▾ on one line on narrow phones */
+    flex-shrink: 0;
   }
   .date-pill::after {
     content: '▾';
@@ -3841,8 +3844,8 @@ function setHeaderDate() {
   const md = `${months[d.getMonth()]} ${d.getDate()}일`;
   // Label says what the date means: editing → the entry's date; past check-in → date being written; else today
   let label;
-  if (editing) label = `이 기록 날짜: ${md}`;
-  else if (state.targetDate) label = `${md}에 기록 중`;
+  if (editing) label = `기록일 ${md}`;
+  else if (state.targetDate) label = `${md} 쓰는 중`;
   else label = `${md} · ${days[d.getDay()]}`;
   $('datePillText').textContent = label;
   $('datePill').classList.toggle('past', editing || !!state.targetDate);
