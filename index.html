@@ -3867,6 +3867,18 @@ function onPickDate(k) {
   if (!k) return;
   const todayKey = dateKey(Date.now());
   if (k > todayKey) return; // future dates not allowed
+  // Editing a saved entry: picking a date moves that entry to the picked date (applied on 저장)
+  if (state.editingKey && (state.step === 'reason' || state.step === 'level')) {
+    if (k !== state.editingKey && getEntryByKey(k) &&
+        !confirm(`${keyToDate(k).getMonth()+1}월 ${keyToDate(k).getDate()}일에는 이미 기록이 있어요. 이 기록으로 덮어쓸까요?`)) {
+      setHeaderDate();
+      return;
+    }
+    state.targetDate = (k === state.editingKey && k === todayKey) ? null : k;
+    setHeaderDate();
+    return;
+  }
+  state.editingKey = null;
   if (k === todayKey) {
     state.targetDate = null;
     setHeaderDate();
@@ -4097,6 +4109,7 @@ function pickLevel(n) {
 }
 
 function goToCheckin() {
+  state.editingKey = null;
   state.level = null;
   state.reasons = [];
   showScreen('level');
@@ -4111,6 +4124,8 @@ function startEditEntry(entry) {
   }
 
   // Prefill state
+  state.targetDate = null;
+  setHeaderDate();
   state.level = entry.level;
   state.reasons = (reasonsOf(entry) || []).slice(); // clone
 
@@ -4147,6 +4162,7 @@ function startEditEntry(entry) {
   const noteEl = oldGB ? $('noteGood') : null;
   setBody(entry.body || null, entry.bodyWhy || []);
 
+  state.editingKey = dateKey(entry.ts);
   // Sync save button enabled state, count badge, etc.
   if (typeof updateReasonUI === 'function') updateReasonUI();
 
@@ -4516,7 +4532,18 @@ async function save() {
     targetTs = t.getTime();
   }
   // If an entry already exists for that date, preserve its original ts/id (edit, not new)
-  const existing = state.targetDate ? getEntryByKey(state.targetDate) : getTodaysEntry();
+  let existing = state.targetDate ? getEntryByKey(state.targetDate) : getTodaysEntry();
+  let movedFrom = null;
+  const editing = state.editingKey ? getEntryByKey(state.editingKey) : null;
+  const destKey = state.targetDate || dateKey(Date.now());
+  if (editing && state.editingKey !== destKey) {
+    // Moving the edited entry to another date: keep its id and original time of day
+    movedFrom = state.editingKey;
+    const t = keyToDate(destKey);
+    const o = new Date(editing.ts);
+    t.setHours(o.getHours(), o.getMinutes(), o.getSeconds());
+    existing = { id: editing.id, ts: t.getTime() };
+  }
   const isEdit = !!existing;
   const entry = {
     id: existing ? existing.id : `${Date.now()}`,
@@ -4528,6 +4555,7 @@ async function save() {
     bodyWhy: (state.body === 1 || state.body === 2) ? (state.bodyWhy || []).slice() : [],
     ...buildNoteFields()
   };
+  if (movedFrom) entry._movedFrom = movedFrom;
 
   // Auth gate: require login before saving
   if (!state.user) {
@@ -4545,7 +4573,17 @@ async function save() {
 async function completeSave(entry, opts = {}) {
   const isEdit = !!opts.isEdit;
   try {
+    const movedFrom = entry._movedFrom;
+    delete entry._movedFrom;
     await saveEntry(entry);
+    state.editingKey = null;
+    if (movedFrom && movedFrom !== dateKey(entry.ts)) {
+      localStorage.removeItem(`${KEY_PREFIX}${movedFrom}`);
+      if (isCloudSyncEnabled()) {
+        try { await window.fb.fsDeleteEntry(state.user.uid, movedFrom); }
+        catch (e) { console.warn('[cloud] delete moved entry failed:', e); }
+      }
+    }
     const savedKey = dateKey(entry.ts);
     if (savedKey !== dateKey(Date.now())) {
       // Past-date check-in: go to history focused on that date (no celebration/notif prompt)
@@ -4867,6 +4905,7 @@ function initApp() {
   if (backBtn) backBtn.addEventListener('click', () => {
     // Past-date check-in: ← cancels it and returns to today's flow
     if (state.targetDate) {
+      state.editingKey = null;
       cancelPastCheckin();
       state.reasons = [];
       const t = getTodaysEntry();
@@ -4875,6 +4914,7 @@ function initApp() {
     }
     // Editing today's saved entry: ← goes back to today's result (discard unsaved edits).
     // First check-in of the day: ← goes back to the mood screen as before.
+    state.editingKey = null;
     const today = getTodaysEntry();
     if (today) {
       showTodayResult(today);
